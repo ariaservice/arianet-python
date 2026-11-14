@@ -8,7 +8,7 @@ keys, firewalls, balance, invoices).
 - Personal API token auth, retries on `429` that honor `Retry-After`, safe retries of reads and
   idempotent writes after network errors and `502`/`503`/`504`.
 - Typed exceptions carrying the API's stable error codes.
-- No dependencies outside the standard library. Python 3.9 or newer.
+- No dependencies outside the standard library. Python 3.10 or newer.
 
 Documentation: <https://docs.ariaservice.net/sdk/python>
 

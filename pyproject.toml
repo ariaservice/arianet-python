@@ -9,7 +9,7 @@ description = "Official Python client for the Arianet (Ariaservice) public API"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [{ name = "Ariaservice", email = "git@ariaservice.net" }]
 keywords = ["arianet", "ariaservice", "cloud", "vps", "hosting", "sms", "api", "sdk"]
 classifiers = [
