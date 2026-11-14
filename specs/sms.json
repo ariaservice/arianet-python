@@ -1,0 +1,2027 @@
+{
+  "components": {
+    "schemas": {
+      "Batch": {
+        "properties": {
+          "body": {
+            "description": "text of the first message",
+            "type": "string"
+          },
+          "channel": {
+            "description": "how the batch was submitted",
+            "enum": [
+              "panel",
+              "api",
+              "system"
+            ],
+            "type": "string"
+          },
+          "completed_at": {
+            "description": "when the batch reached its final status",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost_rial": {
+            "description": "charged amount, refunds for refused messages deducted",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "delivered": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "from": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "parts": {
+            "type": "integer"
+          },
+          "recipients": {
+            "type": "integer"
+          },
+          "scheduled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sender_ip": {
+            "description": "masked sender address: 85.133.133.x, or the first three IPv6 groups followed by :x",
+            "nullable": true,
+            "type": "string"
+          },
+          "sent": {
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "processing",
+              "partial",
+              "completed",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "description": "client_reference",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BlockedRecipient": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "mobile": {
+            "type": "string"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Error": {
+        "properties": {
+          "code": {
+            "description": "insufficient_balance (402), identity_needed (403), forbidden (403), account_suspended (403), validation_failed (422), not_found (404), rate_limited (429)",
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "Inbound": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "received_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Line": {
+        "properties": {
+          "can_receive_inbound": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "dedicated",
+              "shared"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Message": {
+        "properties": {
+          "batch_id": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "cost_rial": {
+            "description": "0 for a message the provider refused",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "delivered_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "delivery_checks": {
+            "description": "how many delivery-status checks ran",
+            "type": "integer"
+          },
+          "encoding": {
+            "description": "text encoding, lowercased (unicode, gsm7, ...)",
+            "nullable": true,
+            "type": "string"
+          },
+          "error": {
+            "nullable": true,
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_checked_at": {
+            "description": "last delivery-status check",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "operator": {
+            "description": "recipient's operator by number prefix (best effort: ported numbers keep their original prefix)",
+            "enum": [
+              "mci",
+              "mtn",
+              "rightel",
+              "other"
+            ],
+            "type": "string"
+          },
+          "parts": {
+            "type": "integer"
+          },
+          "provider": {
+            "properties": {
+              "error_code": {
+                "description": "raw submit error code when the provider refused the message",
+                "nullable": true,
+                "type": "string"
+              },
+              "message_id": {
+                "description": "the provider's message id (operator tracking number)",
+                "nullable": true,
+                "type": "string"
+              },
+              "name": {
+                "description": "provider slug, e.g. magfa",
+                "nullable": true,
+                "type": "string"
+              },
+              "status_code": {
+                "description": "last raw delivery status code (Magfa: -1, 0, 1, 2, 8, 16)",
+                "nullable": true,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "queued_at": {
+            "description": "when the message was created and queued",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "queued: waiting to be sent; sent: accepted by the operator; delivered: reached the handset; failed: the provider refused it (not charged); undelivered: the operator accepted it but it did not reach the handset; rejected; expired",
+            "enum": [
+              "queued",
+              "sent",
+              "delivered",
+              "failed",
+              "undelivered",
+              "rejected",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MessageDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Message"
+          },
+          {
+            "properties": {
+              "timeline": {
+                "description": "ordered by at ascending; synthesized from the message's timestamps for messages created before the event log existed",
+                "items": {
+                  "$ref": "#/components/schemas/MessageTimelineEvent"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "MessageTimelineEvent": {
+        "properties": {
+          "at": {
+            "description": "event time, microsecond precision",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "error_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status_code": {
+            "nullable": true,
+            "type": "integer"
+          },
+          "type": {
+            "description": "queued: created; sent_to_provider: accepted by the provider; provider_refused: refused at submit (refunded); status_checked: a delivery check returned a non-final code (0 = no status yet); delivered_to_operator: code 8, reached the telecom; delivered: code 1; not_delivered: code 2; not_sent_to_operator: code 16; expired: code -1 or the 24h window ended; rejected: blocked locally",
+            "enum": [
+              "queued",
+              "sent_to_provider",
+              "provider_refused",
+              "status_checked",
+              "delivered_to_operator",
+              "delivered",
+              "not_delivered",
+              "not_sent_to_operator",
+              "expired",
+              "rejected"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageMeta": {
+        "properties": {
+          "current_page": {
+            "type": "integer"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Prices": {
+        "properties": {
+          "billing_unit": {
+            "description": "What unit_rial is charged per: one message (default, SMS_BILLING_QUANTITY=messages) or one SMS part",
+            "enum": [
+              "message",
+              "part"
+            ],
+            "type": "string"
+          },
+          "tiers": {
+            "items": {
+              "properties": {
+                "min": {
+                  "type": "integer"
+                },
+                "unit_rial": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "unit_rial": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Scheduled": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "from": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "recipients": {
+            "description": "recipient count",
+            "type": "integer"
+          },
+          "scheduled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "processing",
+              "sent",
+              "failed",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SendAccepted": {
+        "properties": {
+          "batch_id": {
+            "type": "string"
+          },
+          "filtered_blocked_count": {
+            "type": "integer"
+          },
+          "scheduled_id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total_cost_rial": {
+            "type": "integer"
+          },
+          "total_recipients": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SendRequest": {
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "client_reference": {
+            "description": "idempotency reference; the Idempotency-Key header is used when absent",
+            "type": "string"
+          },
+          "from": {
+            "description": "sender line id",
+            "type": "integer"
+          },
+          "recipients": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "scheduled_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "template_id": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipients",
+          "from"
+        ],
+        "type": "object"
+      },
+      "Summary": {
+        "properties": {
+          "daily": {
+            "items": {
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "delivered": {
+                  "type": "integer"
+                },
+                "failed": {
+                  "type": "integer"
+                },
+                "sent": {
+                  "type": "integer"
+                },
+                "spend_rial": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "delivered": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "sent": {
+            "type": "integer"
+          },
+          "spend_rial": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Template": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TemplateInput": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "body"
+        ],
+        "type": "object"
+      },
+      "Webhook": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "events": {
+            "description": "Subscribed per-message events; empty until the customer chooses some (batch.completed is always sent)",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventName"
+            },
+            "type": "array"
+          },
+          "secret_hint": {
+            "description": "masked tail of the signing secret; the full secret is only returned by POST /webhook/secret",
+            "nullable": true,
+            "type": "string"
+          },
+          "url": {
+            "description": "empty when unset",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "WebhookBatchEvent": {
+        "description": "Sent once when a batch reaches a final status. data is the Batch object. For existing receivers the original flat fields are kept at the top level as well: batch_id, client_reference, status (stored value: sent, partially_sent or failed), total_recipients, delivered_count, failed_count, completed_at.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Batch"
+          },
+          "event": {
+            "enum": [
+              "batch.completed"
+            ],
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "occurred_at",
+          "data"
+        ],
+        "type": "object"
+      },
+      "WebhookEventName": {
+        "description": "Subscribable webhook events. batch.completed is always sent and cannot be unsubscribed.",
+        "enum": [
+          "message.delivered",
+          "message.failed",
+          "inbound.received"
+        ],
+        "type": "string"
+      },
+      "WebhookInboundEvent": {
+        "description": "An SMS received on one of the customer's dedicated lines; data is the Inbound object.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Inbound"
+          },
+          "event": {
+            "enum": [
+              "inbound.received"
+            ],
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "occurred_at",
+          "data"
+        ],
+        "type": "object"
+      },
+      "WebhookMessageEvent": {
+        "description": "Event message.delivered or message.failed (event is the one that happened). data is the Message as GET /messages/{message} returns it, in its final state (status delivered for message.delivered; failed, undelivered, rejected or expired for message.failed).",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Message"
+          },
+          "event": {
+            "enum": [
+              "message.delivered",
+              "message.failed"
+            ],
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "occurred_at",
+          "data"
+        ],
+        "type": "object"
+      },
+      "WebhookUpdate": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventName"
+            },
+            "type": "array"
+          },
+          "url": {
+            "format": "uri",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Served as /v1/* by sms-service (api.ariaservice.net/sms/v1/*). Authenticate with the session from POST /auth/exchange (the gateway does this for API tokens). The same handlers serve the panel on /api/sms/*. Token scopes: sms:messages:read, sms:messages:write, sms:lines:read, sms:templates:read, sms:templates:write.\n\nWebhooks: configure with PUT /webhook. Each delivery is a POST of {event, occurred_at, data} to your URL with header X-Signature = HMAC-SHA256 of the raw body keyed with your webhook secret; answer 2xx, other answers are retried 5 times with growing delays. Events: message.delivered and message.failed (per message, final delivery state) and inbound.received are sent only when listed in the webhook's events (none by default); batch.completed is always sent. See the WebhookMessageEvent, WebhookInboundEvent and WebhookBatchEvent schemas.",
+    "title": "Aria SMS API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/batches": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "maximum": 200,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "pending",
+                "processing",
+                "partial",
+                "completed",
+                "failed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Batch"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Page of batches"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List batches",
+        "tags": [
+          "batches"
+        ],
+        "x-iam-action": "sms:messages:read"
+      }
+    },
+    "/batches/{batch}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Batch"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Batch"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Show a batch",
+        "tags": [
+          "batches"
+        ],
+        "x-iam-action": "sms:messages:read"
+      }
+    },
+    "/blocked-recipients": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "maximum": 200,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "phone",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/BlockedRecipient"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Page of blocked recipients"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List blocked recipients",
+        "tags": [
+          "blocked-recipients"
+        ],
+        "x-iam-action": "sms:messages:read"
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "phone"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BlockedRecipient"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Block a recipient",
+        "tags": [
+          "blocked-recipients"
+        ],
+        "x-iam-action": "sms:blocklist:write"
+      }
+    },
+    "/blocked-recipients/{blockedRecipient}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "blockedRecipient",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Unblock a recipient",
+        "tags": [
+          "blocked-recipients"
+        ],
+        "x-iam-action": "sms:blocklist:write"
+      }
+    },
+    "/inbound": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "maximum": 200,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Inbound"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Page of inbound messages"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List inbound messages on the account's dedicated lines",
+        "tags": [
+          "inbound"
+        ],
+        "x-iam-action": "sms:messages:read"
+      }
+    },
+    "/lines": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "maximum": 200,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Line"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Page of lines"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List the sender lines the account may send from",
+        "tags": [
+          "lines"
+        ],
+        "x-iam-action": "sms:lines:read"
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  },
+                  "number": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Requested"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Request a dedicated line",
+        "tags": [
+          "lines"
+        ],
+        "x-iam-action": "sms:lines:request"
+      }
+    },
+    "/messages": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "maximum": 200,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "batch_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "queued",
+                "sent",
+                "delivered",
+                "failed",
+                "undelivered",
+                "rejected",
+                "expired"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Page of messages"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List messages",
+        "tags": [
+          "messages"
+        ],
+        "x-iam-action": "sms:messages:read"
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendAccepted"
+                }
+              }
+            },
+            "description": "Accepted: {batch_id} or, when scheduled_at is given, {scheduled_id}"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Send a message to one or more recipients (or schedule it)",
+        "tags": [
+          "messages"
+        ],
+        "x-iam-action": "sms:messages:send"
+      }
+    },
+    "/messages/{message}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/MessageDetail"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Message"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Show a message",
+        "tags": [
+          "messages"
+        ],
+        "x-iam-action": "sms:messages:read"
+      }
+    },
+    "/prices": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prices"
+                }
+              }
+            },
+            "description": "Prices"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Per-message price of the caller's pricing profile",
+        "tags": [
+          "prices"
+        ],
+        "x-iam-action": "sms:messages:read"
+      }
+    },
+    "/reports/summary": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Summary"
+                }
+              }
+            },
+            "description": "Summary"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Delivery and spend summary",
+        "tags": [
+          "reports"
+        ],
+        "x-iam-action": "sms:reports:read"
+      }
+    },
+    "/scheduled": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "maximum": 200,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Scheduled"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Page of scheduled sends"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List scheduled sends",
+        "tags": [
+          "scheduled"
+        ],
+        "x-iam-action": "sms:messages:read"
+      }
+    },
+    "/scheduled/{scheduled}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduled",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cancelled"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Cancel a pending scheduled send",
+        "tags": [
+          "scheduled"
+        ],
+        "x-iam-action": "sms:messages:send"
+      }
+    },
+    "/templates": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "maximum": 200,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Template"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Page of templates"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List templates",
+        "tags": [
+          "templates"
+        ],
+        "x-iam-action": "sms:templates:read"
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Template"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create a template",
+        "tags": [
+          "templates"
+        ],
+        "x-iam-action": "sms:templates:write"
+      }
+    },
+    "/templates/{template}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Delete a template",
+        "tags": [
+          "templates"
+        ],
+        "x-iam-action": "sms:templates:write"
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Template"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Template"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Show a template",
+        "tags": [
+          "templates"
+        ],
+        "x-iam-action": "sms:templates:read"
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Template"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Template"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Update a template",
+        "tags": [
+          "templates"
+        ],
+        "x-iam-action": "sms:templates:write"
+      }
+    },
+    "/webhook": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Webhook"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Webhook"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Show the webhook settings",
+        "tags": [
+          "webhook"
+        ],
+        "x-iam-action": "sms:webhooks:write"
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Webhook"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Webhook"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Set the webhook URL, enabled flag and subscribed events",
+        "tags": [
+          "webhook"
+        ],
+        "x-iam-action": "sms:webhooks:write"
+      }
+    },
+    "/webhook/secret": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "secret": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "New secret"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Rotate the webhook signing secret",
+        "tags": [
+          "webhook"
+        ],
+        "x-iam-action": "sms:webhooks:write"
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Arianet API gateway",
+      "url": "https://api.ariaservice.net/sms/v1"
+    }
+  ],
+  "x-webhooks": {
+    "batch.completed": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookBatchEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Any 2xx acknowledges the event"
+          }
+        },
+        "summary": "Event batch.completed"
+      }
+    },
+    "inbound.received": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookInboundEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Any 2xx acknowledges the event"
+          }
+        },
+        "summary": "Event inbound.received"
+      }
+    },
+    "message.delivered": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookMessageEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Any 2xx acknowledges the event"
+          }
+        },
+        "summary": "Event message.delivered"
+      }
+    },
+    "message.failed": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookMessageEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Any 2xx acknowledges the event"
+          }
+        },
+        "summary": "Event message.failed"
+      }
+    }
+  }
+}

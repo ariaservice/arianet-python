@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "arianet"
+dynamic = ["version"]
+description = "Official Python client for the Arianet (Ariaservice) public API"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+authors = [{ name = "Ariaservice", email = "git@ariaservice.net" }]
+keywords = ["arianet", "ariaservice", "cloud", "vps", "hosting", "sms", "api", "sdk"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Internet",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/ariaservice/arianet-python"
+Documentation = "https://docs.ariaservice.net/sdk/python"
+Issues = "https://github.com/ariaservice/arianet-python/issues"
+
+[tool.hatch.version]
+path = "src/arianet/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arianet"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/arianet", "tests", "README.md", "LICENSE"]

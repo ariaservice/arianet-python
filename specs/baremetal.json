@@ -1,0 +1,4989 @@
+{
+  "components": {
+    "responses": {
+      "Error": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Refused; see code."
+      }
+    },
+    "schemas": {
+      "BYOIPBlock": {
+        "description": "A leased IPv4 block (bring your own IP, #647) routed, or on its way, to the server.",
+        "properties": {
+          "attached_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "block_id": {
+            "description": "ip-service's block id.",
+            "type": "string"
+          },
+          "campus": {
+            "description": "OVH IP campus (BHS, GRA, ...).",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "prefix": {
+            "description": "CIDR, e.g. 203.0.113.0/24.",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "awaiting_import_order",
+              "imported",
+              "moving",
+              "attached",
+              "parking",
+              "parked",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "stage_label_fa": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "block_id",
+          "prefix",
+          "stage",
+          "stage_label_fa"
+        ],
+        "type": "object"
+      },
+      "BYOIPDestination": {
+        "description": "One of your servers as a destination of a leased block: send {product, region, resource_id: server_id} to ip-service.",
+        "properties": {
+          "campus": {
+            "description": "OVH IP campus; a block can only be routed within its campus.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datacenter": {
+            "type": "string"
+          },
+          "datacenter_label_fa": {
+            "type": "string"
+          },
+          "eligible": {
+            "description": "A leased block can be routed to it now.",
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "product": {
+            "enum": [
+              "baremetal"
+            ],
+            "type": "string"
+          },
+          "reason_fa": {
+            "description": "Why not, in Persian.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "description": "This install's region (ovh-ca).",
+            "type": "string"
+          },
+          "server_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "server_id",
+          "name",
+          "datacenter",
+          "campus",
+          "region",
+          "product",
+          "eligible",
+          "reason_fa"
+        ],
+        "type": "object"
+      },
+      "CPU": {
+        "properties": {
+          "boost": {
+            "description": "GHz; 0 when none.",
+            "type": "number"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "cores": {
+            "description": "Total.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "count": {
+            "description": "Sockets.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "frequency": {
+            "description": "GHz.",
+            "type": "number"
+          },
+          "model": {
+            "type": "string"
+          },
+          "threads": {
+            "description": "Total.",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "brand",
+          "model",
+          "cores",
+          "threads",
+          "frequency"
+        ],
+        "type": "object"
+      },
+      "Config": {
+        "properties": {
+          "bandwidth": {
+            "type": "string"
+          },
+          "bandwidth_label_fa": {
+            "type": "string"
+          },
+          "catalog": {
+            "description": "Supplier catalog: bm (bare-metal) or eco. The same plan code may be in both at different prices.",
+            "enum": [
+              "bm",
+              "eco"
+            ],
+            "type": "string"
+          },
+          "datacenter": {
+            "type": "string"
+          },
+          "datacenter_info": {
+            "$ref": "#/components/schemas/DatacenterOption"
+          },
+          "datacenter_label_fa": {
+            "type": "string"
+          },
+          "hostname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "memory": {
+            "type": "string"
+          },
+          "memory_label_fa": {
+            "type": "string"
+          },
+          "options": {
+            "description": "Every chosen option with what it costs monthly.",
+            "items": {
+              "$ref": "#/components/schemas/OrderOption"
+            },
+            "type": "array"
+          },
+          "plan_code": {
+            "type": "string"
+          },
+          "storage": {
+            "type": "string"
+          },
+          "storage_label_fa": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "catalog",
+          "plan_code",
+          "datacenter",
+          "memory",
+          "storage",
+          "bandwidth"
+        ],
+        "type": "object"
+      },
+      "Country": {
+        "properties": {
+          "code": {
+            "description": "ISO 3166-1 alpha-2, lowercase (the flag).",
+            "type": "string"
+          },
+          "name_fa": {
+            "type": "string"
+          },
+          "region_fa": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name_fa",
+          "region_fa"
+        ],
+        "type": "object"
+      },
+      "Credentials": {
+        "description": "Shown once; later reveals answer 410 already_revealed.",
+        "properties": {
+          "ip": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ip",
+          "username",
+          "password"
+        ],
+        "type": "object"
+      },
+      "DatacenterOption": {
+        "properties": {
+          "city_fa": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "country_code": {
+            "description": "ISO 3166-1 alpha-2, lowercase; empty when unknown.",
+            "type": "string"
+          },
+          "country_fa": {
+            "type": "string"
+          },
+          "delivery": {
+            "description": "Never a promise of instant delivery: up_to_72h (1H-*, 24H, 72H at the datacenter), longer (any other orderable estimate), unavailable (disabled).",
+            "enum": [
+              "up_to_72h",
+              "longer",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "region_fa": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "country_fa",
+          "city_fa",
+          "country_code",
+          "region_fa",
+          "delivery"
+        ],
+        "type": "object"
+      },
+      "Error": {
+        "properties": {
+          "balance": {
+            "description": "insufficient_balance only: what the wallet has available.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "description": "Stable machine code.",
+            "enum": [
+              "already_linked",
+              "already_revealed",
+              "awaiting_price_difference",
+              "byoip_not_found",
+              "byoip_wrong_stage",
+              "campus_mismatch",
+              "conflict",
+              "console_busy",
+              "console_unavailable",
+              "core_unavailable",
+              "credentials_not_ready",
+              "demo_server",
+              "forbidden",
+              "gate_required",
+              "guard_refused",
+              "identity_hold",
+              "identity_needed",
+              "insufficient_balance",
+              "internal_error",
+              "invalid_input",
+              "invalid_stage",
+              "invalid_transition",
+              "ip_",
+              "ip_not_found",
+              "ip_not_routed",
+              "ip_renew_automatic",
+              "ips_not_sold",
+              "method_not_allowed",
+              "no_cart_for_ip",
+              "no_live_data",
+              "no_price",
+              "no_price_difference",
+              "no_rate",
+              "no_tax",
+              "not_byoip",
+              "not_cancellable",
+              "not_found",
+              "not_linked",
+              "not_ordered_yet",
+              "not_parked",
+              "not_renewed_at_supplier",
+              "not_routed",
+              "order_cancelled",
+              "ovh_order_id_required",
+              "ovh_order_not_found",
+              "ovh_order_used",
+              "plan_not_found",
+              "preview_exists",
+              "preview_read_only",
+              "purchase_mismatch",
+              "rate_limit_exceeded",
+              "refund_unavailable",
+              "reinstall_in_progress",
+              "renewal_closed",
+              "renewal_not_due",
+              "renewal_not_paid",
+              "renewal_paid",
+              "routed_elsewhere",
+              "rules_not_accepted",
+              "rules_outdated",
+              "server_not_ready",
+              "server_provisioning",
+              "server_suspended",
+              "server_terminated",
+              "service_gone",
+              "service_linked",
+              "service_not_found",
+              "service_not_this_order",
+              "service_predates_order",
+              "superseded",
+              "supplier_unavailable",
+              "template_unavailable",
+              "unauthorized",
+              "unavailable",
+              "unavailable_combo",
+              "unknown_country",
+              "unknown_ip_offer",
+              "unpriced_order",
+              "verify_ovh_order",
+              "wrong_block",
+              "wrong_block_size"
+            ],
+            "type": "string"
+          },
+          "error": {
+            "description": "English, for people. Branch on code.",
+            "type": "string"
+          },
+          "required": {
+            "description": "insufficient_balance only: what the order needs.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ],
+        "type": "object"
+      },
+      "Family": {
+        "description": "Every addon family of a plan, mandatory and optional, in display order. Kind, step and label are data.",
+        "properties": {
+          "default": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exclusive": {
+            "description": "At most one option (else 0..n, e.g. licences).",
+            "type": "boolean"
+          },
+          "key": {
+            "description": "Supplier family key; send it back in options.",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "memory",
+              "storage",
+              "system_storage",
+              "bandwidth",
+              "private_network",
+              "gpu",
+              "os_license",
+              "app_license",
+              "other"
+            ],
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "mandatory": {
+            "description": "A choice is required.",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/FamilyOption"
+            },
+            "type": "array"
+          },
+          "step": {
+            "description": "Wizard step that renders it.",
+            "enum": [
+              "memory",
+              "storage",
+              "network",
+              "extras"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label_fa",
+          "kind",
+          "mandatory",
+          "exclusive",
+          "step",
+          "default",
+          "options"
+        ],
+        "type": "object"
+      },
+      "FamilyOption": {
+        "description": "price is the monthly extra: \"0\" when included, null when not priced yet.",
+        "properties": {
+          "available": {
+            "description": "delivery is not unavailable.",
+            "type": "boolean"
+          },
+          "code": {
+            "description": "Supplier addon code.",
+            "type": "string"
+          },
+          "delivery": {
+            "description": "Never a promise of instant delivery: up_to_72h (1H-*, 24H, 72H at the datacenter), longer (any other orderable estimate), unavailable (disabled).",
+            "enum": [
+              "up_to_72h",
+              "longer",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "price": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "label_fa",
+          "price",
+          "delivery",
+          "is_default",
+          "available"
+        ],
+        "type": "object"
+      },
+      "History": {
+        "properties": {
+          "interventions": {
+            "items": {
+              "properties": {
+                "at": {
+                  "description": "RFC 3339 time, UTC.",
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "tasks": {
+            "items": {
+              "properties": {
+                "finished_at": {
+                  "description": "RFC 3339 time, UTC.",
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "function": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "started_at": {
+                  "description": "RFC 3339 time, UTC.",
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "interventions",
+          "tasks"
+        ],
+        "type": "object"
+      },
+      "IP": {
+        "description": "An additional IP block routed to the server; renews monthly on its own expiry, paid like the server.",
+        "properties": {
+          "block": {
+            "description": "CIDR, e.g. 192.0.2.8/29 (a single address is /32).",
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "delivered_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "plan_code": {
+            "type": "string"
+          },
+          "renewal": {
+            "properties": {
+              "amount": {
+                "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "deadline_at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "due_at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "due_at",
+              "deadline_at",
+              "amount"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "server_id": {
+            "type": "string"
+          },
+          "size": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "active",
+              "expired",
+              "terminated"
+            ],
+            "type": "string"
+          },
+          "state_label_fa": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "server_id",
+          "block",
+          "size",
+          "state",
+          "expires_at",
+          "renewal"
+        ],
+        "type": "object"
+      },
+      "IPOffers": {
+        "description": "Additional IPv4 a server can order: a single address or a block of its registry, monthly, paid up front.",
+        "properties": {
+          "countries": {
+            "items": {
+              "properties": {
+                "code": {
+                  "description": "Geolocation country (send it as country).",
+                  "type": "string"
+                },
+                "flag": {
+                  "description": "ISO 3166-1 alpha-2, lowercase.",
+                  "type": "string"
+                },
+                "label_fa": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "label_fa",
+                "flag"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "datacenter": {
+            "type": "string"
+          },
+          "datacenter_label_fa": {
+            "type": "string"
+          },
+          "default_country": {
+            "type": "string"
+          },
+          "delivery": {
+            "description": "Never a promise of instant delivery: up_to_72h (1H-*, 24H, 72H at the datacenter), longer (any other orderable estimate), unavailable (disabled).",
+            "enum": [
+              "up_to_72h",
+              "longer",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "delivery_label_fa": {
+            "type": "string"
+          },
+          "offers": {
+            "items": {
+              "properties": {
+                "available": {
+                  "description": "Priced and orderable.",
+                  "type": "boolean"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "first_payment": {
+                  "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "label_fa": {
+                  "type": "string"
+                },
+                "monthly": {
+                  "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "plan_code": {
+                  "type": "string"
+                },
+                "prefix": {
+                  "description": "32 for a single address.",
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "setup": {
+                  "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "size": {
+                  "description": "Addresses in the block.",
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "version": {
+                  "format": "int64",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "plan_code",
+                "label_fa",
+                "prefix",
+                "size",
+                "monthly",
+                "setup",
+                "first_payment",
+                "available"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "orderable": {
+            "description": "The server can order IPs now.",
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Why not: ips_not_sold, server_not_ready, demo_server.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registry": {
+            "description": "Where the server's additional IPv4 come from: arin (Canada, Asia-Pacific) or ripe (Europe).",
+            "type": "string"
+          },
+          "rules_version": {
+            "type": "string"
+          },
+          "server_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "server_id",
+          "registry",
+          "countries",
+          "default_country",
+          "offers",
+          "orderable",
+          "reason",
+          "rules_version"
+        ],
+        "type": "object"
+      },
+      "OSTemplate": {
+        "properties": {
+          "family": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "family",
+          "label_fa"
+        ],
+        "type": "object"
+      },
+      "Option": {
+        "description": "price is the monthly extra (0 for the included choice).",
+        "properties": {
+          "code": {
+            "description": "Supplier addon code.",
+            "type": "string"
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "delivery": {
+            "description": "Never a promise of instant delivery: up_to_72h (1H-*, 24H, 72H at the datacenter), longer (any other orderable estimate), unavailable (disabled).",
+            "enum": [
+              "up_to_72h",
+              "longer",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "price": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "label_fa",
+          "price",
+          "delivery"
+        ],
+        "type": "object"
+      },
+      "Options": {
+        "properties": {
+          "bandwidth": {
+            "description": "v1.",
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "type": "array"
+          },
+          "catalog": {
+            "description": "Supplier catalog: bm (bare-metal) or eco. The same plan code may be in both at different prices.",
+            "enum": [
+              "bm",
+              "eco"
+            ],
+            "type": "string"
+          },
+          "countries": {
+            "items": {
+              "$ref": "#/components/schemas/Country"
+            },
+            "type": "array"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "datacenters": {
+            "items": {
+              "$ref": "#/components/schemas/DatacenterOption"
+            },
+            "type": "array"
+          },
+          "families": {
+            "items": {
+              "$ref": "#/components/schemas/Family"
+            },
+            "type": "array"
+          },
+          "memory": {
+            "description": "v1: the memory family's options.",
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "type": "array"
+          },
+          "plan_code": {
+            "type": "string"
+          },
+          "storage": {
+            "description": "v1.",
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "datacenters",
+          "countries",
+          "families",
+          "memory",
+          "storage",
+          "bandwidth"
+        ],
+        "type": "object"
+      },
+      "Order": {
+        "properties": {
+          "can_pay_difference": {
+            "type": "boolean"
+          },
+          "cancellable": {
+            "type": "boolean"
+          },
+          "catalog": {
+            "description": "bm or eco for a server, ip for additional IPs.",
+            "enum": [
+              "bm",
+              "eco",
+              "ip"
+            ],
+            "type": "string"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "created_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datacenter": {
+            "type": "string"
+          },
+          "delivery": {
+            "description": "Never a promise of instant delivery: up_to_72h (1H-*, 24H, 72H at the datacenter), longer (any other orderable estimate), unavailable (disabled).",
+            "enum": [
+              "up_to_72h",
+              "longer",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "delivery_label_fa": {
+            "type": "string"
+          },
+          "demo": {
+            "description": "A demo record (never bought or billed): the panel shows a demo badge.",
+            "type": "boolean"
+          },
+          "first_payment": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "ip": {
+            "description": "An IP order's product and its server.",
+            "properties": {
+              "block": {
+                "description": "Set once delivered.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "label_fa": {
+                "type": "string"
+              },
+              "plan_code": {
+                "type": "string"
+              },
+              "prefix": {
+                "format": "int64",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "server_id": {
+                "type": "string"
+              },
+              "server_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "format": "int64",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "plan_code",
+              "server_id"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteLine"
+            },
+            "type": "array"
+          },
+          "monthly": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paid_at": {
+            "description": "When the wallet was debited (at order time).",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paid_total": {
+            "description": "What was paid in all: the first payment and any price difference.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan_code": {
+            "type": "string"
+          },
+          "plan_name": {
+            "type": "string"
+          },
+          "price_difference": {
+            "description": "Set in stage price_difference: today's price is more than 1 % above what was paid.",
+            "properties": {
+              "amount_due": {
+                "type": "string"
+              },
+              "amount_paid": {
+                "type": "string"
+              },
+              "checked_at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "deadline_at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "difference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "amount_paid",
+              "amount_due",
+              "difference",
+              "deadline_at"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "product": {
+            "description": "server, or ip for additional IPs (catalog ip).",
+            "enum": [
+              "server",
+              "ip"
+            ],
+            "type": "string"
+          },
+          "range": {
+            "type": "string"
+          },
+          "refund": {
+            "description": "What a cancel returned to the wallet.",
+            "properties": {
+              "amount": {
+                "type": "string"
+              },
+              "at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "amount"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "rules_version": {
+            "type": "string"
+          },
+          "server_id": {
+            "description": "Set once the order is active; an IP order's server from the start.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setup": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stage": {
+            "enum": [
+              "price_difference",
+              "awaiting_procurement",
+              "procuring",
+              "ordered_at_datacenter",
+              "datacenter_preparing",
+              "installing",
+              "active",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "stage_label_fa": {
+            "type": "string"
+          },
+          "timeline": {
+            "description": "On GET /orders/{id}, POST /orders and cancel.",
+            "items": {
+              "$ref": "#/components/schemas/TimelineEntry"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "stage",
+          "catalog",
+          "plan_code",
+          "plan_name",
+          "datacenter",
+          "config",
+          "monthly",
+          "setup",
+          "first_payment",
+          "currency",
+          "created_at",
+          "server_id",
+          "cancellable",
+          "delivery"
+        ],
+        "type": "object"
+      },
+      "OrderOption": {
+        "properties": {
+          "amount": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string"
+          },
+          "family_label_fa": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "memory",
+              "storage",
+              "system_storage",
+              "bandwidth",
+              "private_network",
+              "gpu",
+              "os_license",
+              "app_license",
+              "other"
+            ],
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "step": {
+            "enum": [
+              "memory",
+              "storage",
+              "network",
+              "extras"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "family_label_fa",
+          "kind",
+          "step",
+          "code",
+          "label_fa",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "Plan": {
+        "properties": {
+          "available": {
+            "description": "Some configuration can be delivered somewhere; an unavailable plan is shown, disabled.",
+            "type": "boolean"
+          },
+          "base_memory": {
+            "description": "Persian label of the default memory.",
+            "type": "string"
+          },
+          "base_memory_code": {
+            "type": "string"
+          },
+          "base_memory_gb": {
+            "description": "Default memory in GB.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "base_storage": {
+            "description": "Persian label of the default storage.",
+            "type": "string"
+          },
+          "base_storage_code": {
+            "type": "string"
+          },
+          "base_storage_gb": {
+            "description": "Default storage, total GB.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "base_storage_types": {
+            "description": "Disk kinds of the default storage, fastest first.",
+            "items": {
+              "enum": [
+                "nvme",
+                "ssd",
+                "hdd"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "catalog": {
+            "description": "Supplier catalog: bm (bare-metal) or eco. The same plan code may be in both at different prices.",
+            "enum": [
+              "bm",
+              "eco"
+            ],
+            "type": "string"
+          },
+          "countries": {
+            "description": "Countries it is sold in, distinct, in datacenter order.",
+            "items": {
+              "$ref": "#/components/schemas/Country"
+            },
+            "type": "array"
+          },
+          "cpu": {
+            "$ref": "#/components/schemas/CPU"
+          },
+          "datacenters": {
+            "description": "Datacenter codes it is sold in.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "from_price": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "id": {
+            "description": "<catalog>:<plan_code>.",
+            "type": "string"
+          },
+          "locations_fa": {
+            "description": "Countries it is sold in (Persian, distinct): tells a model's regional variants apart.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "model_key": {
+            "description": "Plan code without its regional suffix; regional variants of a model share it.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "plan_code": {
+            "type": "string"
+          },
+          "range": {
+            "type": "string"
+          },
+          "supplier": {
+            "description": "Supplier key, e.g. ovh.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "catalog",
+          "plan_code",
+          "name",
+          "range",
+          "cpu",
+          "datacenters",
+          "locations_fa",
+          "countries",
+          "available",
+          "from_price"
+        ],
+        "type": "object"
+      },
+      "Price": {
+        "description": "For display; what is charged is accounting's.",
+        "properties": {
+          "currency": {
+            "description": "ISO 4217 (IRR).",
+            "type": "string"
+          },
+          "monthly": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setup": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "monthly",
+          "setup",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "Quote": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "delivery": {
+            "description": "Never a promise of instant delivery: up_to_72h (1H-*, 24H, 72H at the datacenter), longer (any other orderable estimate), unavailable (disabled).",
+            "enum": [
+              "up_to_72h",
+              "longer",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "first_payment": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteLine"
+            },
+            "type": "array"
+          },
+          "monthly": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setup": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "lines",
+          "monthly",
+          "setup",
+          "first_payment",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "QuoteLine": {
+        "properties": {
+          "amount": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "plan",
+              "addon",
+              "setup"
+            ],
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku",
+          "kind",
+          "label_fa",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "Range": {
+        "properties": {
+          "description_fa": {
+            "type": "string"
+          },
+          "from_price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Price"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "icon": {
+            "description": "Icon key the panel maps to a picture; empty for a generic server icon.",
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "models": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "name_fa": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "name_fa",
+          "description_fa",
+          "icon",
+          "models",
+          "from_price"
+        ],
+        "type": "object"
+      },
+      "Reinstall": {
+        "properties": {
+          "finished_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "started_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "enum": [
+              "idle",
+              "pending",
+              "running",
+              "done",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "template": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "type": "object"
+      },
+      "Renewal": {
+        "properties": {
+          "amount": {
+            "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deadline_at": {
+            "description": "Pay before this, or the server is not renewed.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "due_at": {
+            "description": "The server expires then.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "missed_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paid_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "period_end": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "period_start": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "renewed_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "server_id": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "due",
+              "paid",
+              "renewed",
+              "missed",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "period_start",
+          "period_end",
+          "due_at",
+          "deadline_at",
+          "amount",
+          "currency",
+          "paid_at"
+        ],
+        "type": "object"
+      },
+      "Rules": {
+        "properties": {
+          "items": {
+            "items": {
+              "properties": {
+                "body_fa": {
+                  "type": "string"
+                },
+                "title_fa": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title_fa",
+                "body_fa"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "version": {
+            "description": "Send it back as rules_version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "items"
+        ],
+        "type": "object"
+      },
+      "Server": {
+        "properties": {
+          "created_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "credentials_available": {
+            "description": "Login details wait to be revealed (once).",
+            "type": "boolean"
+          },
+          "credentials_revealed_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datacenter": {
+            "properties": {
+              "city_fa": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "country_code": {
+                "description": "ISO 3166-1 alpha-2, lowercase (the flag).",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country_fa": {
+                "type": "string"
+              },
+              "label_fa": {
+                "type": "string"
+              },
+              "region_fa": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "label_fa"
+            ],
+            "type": "object"
+          },
+          "demo": {
+            "description": "A demo server (never bought or billed): the panel shows a demo badge.",
+            "type": "boolean"
+          },
+          "expires_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "ip": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "live": {
+            "description": "A preview's live state at the datacenter.",
+            "properties": {
+              "cpu": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "datacenter": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "disks": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "expires_at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "ip": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "memory": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "os": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "plan": {
+            "properties": {
+              "catalog": {
+                "description": "Supplier catalog: bm (bare-metal) or eco. The same plan code may be in both at different prices.",
+                "enum": [
+                  "bm",
+                  "eco"
+                ],
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "plan_code": {
+                "type": "string"
+              },
+              "range": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "catalog",
+              "plan_code",
+              "name"
+            ],
+            "type": "object"
+          },
+          "preview": {
+            "description": "A read-only preview of one of our own servers: every action is refused (preview_read_only).",
+            "type": "boolean"
+          },
+          "read_only": {
+            "type": "boolean"
+          },
+          "renewal": {
+            "properties": {
+              "amount": {
+                "description": "Decimal amount in currency, from core's display prices (already marked up); null when not priced yet.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "deadline_at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "due_at": {
+                "description": "RFC 3339 time, UTC.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "due_at",
+              "deadline_at",
+              "amount"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "state": {
+            "enum": [
+              "provisioning",
+              "active",
+              "suspended",
+              "terminated"
+            ],
+            "type": "string"
+          },
+          "suspension_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "order_id",
+          "name",
+          "plan",
+          "datacenter",
+          "ip",
+          "state",
+          "expires_at",
+          "renewal",
+          "credentials_available"
+        ],
+        "type": "object"
+      },
+      "ServerDetails": {
+        "description": "Read from the datacenter (cached a minute). Never carries a datacenter URL or host name.",
+        "properties": {
+          "created_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expires_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "general": {
+            "properties": {
+              "boot": {
+                "description": "harddisk | rescue | network.",
+                "type": "string"
+              },
+              "boot_mode": {
+                "description": "uefi | legacy.",
+                "type": "string"
+              },
+              "datacenter": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  },
+                  "label_fa": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "monitoring": {
+                "type": "boolean"
+              },
+              "os": {
+                "properties": {
+                  "family": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "label_fa": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "plan_code": {
+                "type": "string"
+              },
+              "power_state": {
+                "type": "string"
+              },
+              "proactive_intervention": {
+                "type": "boolean"
+              },
+              "rack": {
+                "type": "string"
+              },
+              "range": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "zone": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "hardware": {
+            "properties": {
+              "cpu": {
+                "properties": {
+                  "boost_ghz": {
+                    "type": "number"
+                  },
+                  "cores": {
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "count": {
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "frequency_ghz": {
+                    "type": "number"
+                  },
+                  "model": {
+                    "type": "string"
+                  },
+                  "threads": {
+                    "format": "int64",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "disks": {
+                "items": {
+                  "properties": {
+                    "count": {
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "size_gb": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "memory": {
+                "properties": {
+                  "ecc": {
+                    "type": "boolean"
+                  },
+                  "size_gb": {
+                    "type": "number"
+                  },
+                  "speed_mhz": {
+                    "format": "int64",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "raid": {
+                "description": "soft | hard | hybrid | none | empty when unknown.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "network": {
+            "properties": {
+              "aggregation": {
+                "type": "boolean"
+              },
+              "blocks": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "ipv4": {
+                "type": "string"
+              },
+              "ipv4_gateway": {
+                "type": "string"
+              },
+              "ipv4_network": {
+                "type": "string"
+              },
+              "ipv6": {
+                "type": "string"
+              },
+              "ipv6_gateway": {
+                "type": "string"
+              },
+              "link_mbps": {
+                "type": "number"
+              },
+              "private_links": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "private_mbps": {
+                "type": "number"
+              },
+              "public_in_mbps": {
+                "type": "number"
+              },
+              "public_links": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "public_out_mbps": {
+                "type": "number"
+              },
+              "reverse": {
+                "description": "A reverse name the customer set; null for the datacenter default.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "throttled": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "general",
+          "hardware",
+          "network"
+        ],
+        "type": "object"
+      },
+      "Supplier": {
+        "properties": {
+          "countries": {
+            "description": "Countries it delivers from, distinct, in datacenter order.",
+            "items": {
+              "$ref": "#/components/schemas/Country"
+            },
+            "type": "array"
+          },
+          "description_fa": {
+            "type": "string"
+          },
+          "from_price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Price"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "key": {
+            "type": "string"
+          },
+          "locations_fa": {
+            "description": "Countries it delivers from.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "logo_url": {
+            "type": "string"
+          },
+          "models": {
+            "description": "Plans it sells now.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "name_fa": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "name_fa",
+          "description_fa",
+          "logo_url",
+          "models",
+          "locations_fa",
+          "countries",
+          "from_price"
+        ],
+        "type": "object"
+      },
+      "TimelineEntry": {
+        "properties": {
+          "at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "label_fa": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stage": {
+            "enum": [
+              "price_difference",
+              "awaiting_procurement",
+              "procuring",
+              "ordered_at_datacenter",
+              "datacenter_preparing",
+              "installing",
+              "active",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "label_fa",
+          "note",
+          "at"
+        ],
+        "type": "object"
+      },
+      "Traffic": {
+        "properties": {
+          "download": {
+            "$ref": "#/components/schemas/TrafficStats"
+          },
+          "link": {
+            "enum": [
+              "public",
+              "private"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "enum": [
+              "hourly",
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "properties": {
+                "down": {
+                  "type": "number"
+                },
+                "t": {
+                  "description": "Unix time.",
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "up": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "t",
+                "down",
+                "up"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "unit": {
+            "enum": [
+              "bps"
+            ],
+            "type": "string"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/TrafficStats"
+          }
+        },
+        "required": [
+          "period",
+          "link",
+          "unit",
+          "points"
+        ],
+        "type": "object"
+      },
+      "TrafficStats": {
+        "properties": {
+          "avg": {
+            "type": "number"
+          },
+          "bytes": {
+            "description": "Volume over the period.",
+            "type": "number"
+          },
+          "last": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "description": "A session from POST /auth/exchange with core's handoff assertion.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Dedicated (bare-metal) servers resold from OVHcloud: the whole catalog, monthly only, delivered without an operating system after manual procurement. Errors carry a stable `code`. Requests are rate limited per caller (RateLimit-* headers, 429 rate_limit_exceeded).",
+    "title": "Arianet Dedicated Servers API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/byoip/destinations": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listBYOIPDestinations",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/BYOIPDestination"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Your servers a leased IPv4 block (ip-service) can be routed to, and why not",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/console/ws": {
+      "get": {
+        "operationId": "consoleSocket",
+        "parameters": [
+          {
+            "description": "The link's single-use token.",
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "Switching to the websocket."
+          },
+          "401": {
+            "description": "The link is invalid or expired."
+          }
+        },
+        "security": [],
+        "summary": "The console websocket: binary frames are the terminal both ways; text frames are {type: resize, cols, rows} from the client and {type: status, state, code} from the service",
+        "x-codes": [
+          "link_used",
+          "console_busy",
+          "console_unavailable",
+          "supplier_unavailable"
+        ]
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "getOpenAPI",
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3.1 document."
+          }
+        },
+        "security": [],
+        "summary": "This document"
+      }
+    },
+    "/orders": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listOrders",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Order"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Your orders",
+        "x-permission": "baremetal:view"
+      },
+      "post": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "createOrder",
+        "parameters": [
+          {
+            "description": "A repeat with the same key answers with the first result.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "accept_rules": {
+                    "const": true
+                  },
+                  "bandwidth": {
+                    "description": "Bandwidth addon code.",
+                    "type": "string"
+                  },
+                  "catalog": {
+                    "description": "Supplier catalog: bm (bare-metal) or eco. The same plan code may be in both at different prices.",
+                    "enum": [
+                      "bm",
+                      "eco"
+                    ],
+                    "type": "string"
+                  },
+                  "datacenter": {
+                    "type": "string"
+                  },
+                  "hostname": {
+                    "description": "Optional RFC 1123 host name.",
+                    "maxLength": 253,
+                    "type": "string"
+                  },
+                  "memory": {
+                    "description": "Memory addon code.",
+                    "type": "string"
+                  },
+                  "options": {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Choices by family key (Options.families[].key): a code, or a list of codes for a non-exclusive family. Overrides memory / storage / bandwidth; a mandatory family left out takes its default.",
+                    "properties": {},
+                    "type": "object"
+                  },
+                  "plan_code": {
+                    "type": "string"
+                  },
+                  "rules_version": {
+                    "description": "GET /rules version.",
+                    "type": "string"
+                  },
+                  "storage": {
+                    "description": "Storage addon code.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "catalog",
+                  "plan_code",
+                  "datacenter",
+                  "rules_version",
+                  "accept_rules"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Order"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Order a server: the first payment is debited from your wallet; delivery follows manual procurement",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "identity_needed",
+          "identity_hold (403)",
+          "unavailable_combo",
+          "rules_not_accepted",
+          "rules_outdated",
+          "no_price",
+          "core_unavailable"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "getOrder",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Order"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "One order with its stage timeline",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/orders/{id}/cancel": {
+      "post": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "cancelOrder",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Order"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Cancel before procurement started (or instead of paying a price difference); the full amount returns to the wallet",
+        "x-codes": [
+          "not_cancellable",
+          "identity_hold (403)"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/orders/{id}/pay-difference": {
+      "post": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "payOrderDifference",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A repeat with the same key answers with the first result.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Order"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Pay an order's price difference from the wallet; the order returns to the purchase queue",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "identity_hold (403)",
+          "no_price_difference"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/plans": {
+      "get": {
+        "operationId": "listPlans",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "range",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "supplier",
+            "schema": {
+              "description": "Supplier key; an unknown one has no models.",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Plan"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Every server model of both catalogs, available or not"
+      }
+    },
+    "/plans/{catalog}/{plan}/options": {
+      "get": {
+        "operationId": "getPlanOptions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "catalog",
+            "required": true,
+            "schema": {
+              "description": "Supplier catalog: bm (bare-metal) or eco. The same plan code may be in both at different prices.",
+              "enum": [
+                "bm",
+                "eco"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "plan",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "datacenter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "memory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "storage",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "system_storage",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gpu",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Options"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "A model's datacenters and every option family (memory, disks, network, GPU, licences) with prices and delivery for the choices so far"
+      }
+    },
+    "/quote": {
+      "post": {
+        "operationId": "quote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "accept_rules": {
+                    "type": "boolean"
+                  },
+                  "bandwidth": {
+                    "description": "Bandwidth addon code.",
+                    "type": "string"
+                  },
+                  "catalog": {
+                    "description": "Supplier catalog: bm (bare-metal) or eco. The same plan code may be in both at different prices.",
+                    "enum": [
+                      "bm",
+                      "eco"
+                    ],
+                    "type": "string"
+                  },
+                  "datacenter": {
+                    "type": "string"
+                  },
+                  "hostname": {
+                    "description": "Optional RFC 1123 host name.",
+                    "maxLength": 253,
+                    "type": "string"
+                  },
+                  "memory": {
+                    "description": "Memory addon code.",
+                    "type": "string"
+                  },
+                  "options": {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Choices by family key (Options.families[].key): a code, or a list of codes for a non-exclusive family. Overrides memory / storage / bandwidth; a mandatory family left out takes its default.",
+                    "properties": {},
+                    "type": "object"
+                  },
+                  "plan_code": {
+                    "type": "string"
+                  },
+                  "rules_version": {
+                    "type": "string"
+                  },
+                  "storage": {
+                    "description": "Storage addon code.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "catalog",
+                  "plan_code",
+                  "datacenter"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Quote"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Price a configuration (nothing held)"
+      }
+    },
+    "/ranges": {
+      "get": {
+        "operationId": "listRanges",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "supplier",
+            "schema": {
+              "description": "Supplier key; an unknown one has no ranges.",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Range"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Server families with their cheapest price"
+      }
+    },
+    "/rules": {
+      "get": {
+        "operationId": "getRules",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Rules"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The dedicated server rules the order must accept"
+      }
+    },
+    "/servers": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listServers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Server"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Your servers",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "getServer",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Server"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "One server",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/console": {
+      "post": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "openServerConsole",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "expires_in": {
+                          "description": "Seconds the link may be opened in.",
+                          "format": "int64",
+                          "type": "integer"
+                        },
+                        "url": {
+                          "description": "Our own websocket (wss://.../console/ws?token=...); never a datacenter URL.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "expires_in"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "A single-use link (60 s) to the server's serial console, relayed by this service only",
+        "x-codes": [
+          "console_unavailable",
+          "preview_read_only",
+          "demo_server",
+          "server_suspended",
+          "identity_hold (403)"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/servers/{id}/credentials/reveal": {
+      "post": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "revealCredentials",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Credentials"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The login details, shown once (never cached)",
+        "x-codes": [
+          "already_revealed (410)",
+          "credentials_not_ready",
+          "identity_hold (403)"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/servers/{id}/details": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "getServerDetails",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ServerDetails"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "General information, hardware and network, read from the datacenter",
+        "x-codes": [
+          "no_live_data",
+          "supplier_unavailable"
+        ],
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/history": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "getServerHistory",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/History"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The latest datacenter interventions and tasks (read only)",
+        "x-codes": [
+          "no_live_data",
+          "supplier_unavailable"
+        ],
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/ip-offers": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listIPOffers",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IPOffers"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Additional IPv4 the server can order (single address or block), with prices",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/ip-orders": {
+      "post": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "orderIP",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A repeat with the same key answers with the first result.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "accept_rules": {
+                    "const": true
+                  },
+                  "country": {
+                    "description": "IPOffers.countries[].code; the default when empty.",
+                    "type": "string"
+                  },
+                  "plan_code": {
+                    "description": "IPOffers.offers[].plan_code.",
+                    "type": "string"
+                  },
+                  "rules_version": {
+                    "description": "GET /rules version.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "plan_code",
+                  "rules_version",
+                  "accept_rules"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Order"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Order an additional IP for the server: debited from your wallet at once; an operator buys it and routes it to the server",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "identity_needed",
+          "identity_hold (403)",
+          "server_not_ready",
+          "ips_not_sold",
+          "unknown_ip_offer",
+          "unknown_country",
+          "rules_not_accepted",
+          "rules_outdated",
+          "no_price",
+          "core_unavailable"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/servers/{id}/ip-quote": {
+      "post": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "quoteIP",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "country": {
+                    "description": "IPOffers.countries[].code; the default when empty.",
+                    "type": "string"
+                  },
+                  "plan_code": {
+                    "description": "IPOffers.offers[].plan_code.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "plan_code"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Quote"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Price an additional IP for the server (nothing held)",
+        "x-codes": [
+          "unknown_ip_offer",
+          "unknown_country",
+          "ips_not_sold"
+        ],
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/ips": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listServerIPs",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "byoip": {
+                          "items": {
+                            "$ref": "#/components/schemas/BYOIPBlock"
+                          },
+                          "type": "array"
+                        },
+                        "ips": {
+                          "items": {
+                            "$ref": "#/components/schemas/IP"
+                          },
+                          "type": "array"
+                        },
+                        "orders": {
+                          "items": {
+                            "$ref": "#/components/schemas/Order"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "ips",
+                        "orders",
+                        "byoip"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The server's additional IP blocks, its IP orders on the way and the leased (BYOIP) blocks routed to it",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/ips/{ip}/renew": {
+      "post": {
+        "description": "Requires the `baremetal:renew` permission.",
+        "operationId": "renewIP",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "IP block id.",
+            "in": "path",
+            "name": "ip",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A repeat with the same key answers with the first result.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Renewal"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Pay an IP block's open renewal (its next month); charged at once",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "renewal_not_due",
+          "renewal_closed",
+          "renewal_paid"
+        ],
+        "x-permission": "baremetal:renew"
+      }
+    },
+    "/servers/{id}/ips/{ip}/renewals": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listIPRenewals",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "IP block id.",
+            "in": "path",
+            "name": "ip",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Renewal"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "One IP block's renewals",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/os-templates": {
+      "get": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "listOSTemplates",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/OSTemplate"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Operating systems the server can be installed with",
+        "x-codes": [
+          "identity_hold (403)"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/servers/{id}/reinstall": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "getReinstall",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Reinstall"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The last installation's state",
+        "x-permission": "baremetal:view"
+      },
+      "post": {
+        "description": "Requires the `baremetal:manage` permission.",
+        "operationId": "reinstallServer",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "hostname": {
+                    "maxLength": 253,
+                    "type": "string"
+                  },
+                  "ssh_key": {
+                    "description": "One OpenSSH public key.",
+                    "maxLength": 8192,
+                    "type": "string"
+                  },
+                  "template": {
+                    "description": "OSTemplate id.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "template"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Reinstall"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Install an operating system: the disks are wiped",
+        "x-codes": [
+          "reinstall_in_progress",
+          "template_unavailable",
+          "rate_limit_exceeded",
+          "supplier_unavailable",
+          "identity_hold (403)"
+        ],
+        "x-permission": "baremetal:manage"
+      }
+    },
+    "/servers/{id}/renew": {
+      "post": {
+        "description": "Requires the `baremetal:renew` permission.",
+        "operationId": "renewServer",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A repeat with the same key answers with the first result.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Renewal"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Pay the open renewal (the next month); charged at once",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "renewal_not_due",
+          "renewal_closed",
+          "renewal_paid"
+        ],
+        "x-permission": "baremetal:renew"
+      }
+    },
+    "/servers/{id}/renewals": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listRenewals",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Renewal"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The server's renewals",
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/servers/{id}/traffic": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "getServerTraffic",
+        "parameters": [
+          {
+            "description": "Server or order id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "schema": {
+              "enum": [
+                "hourly",
+                "daily",
+                "weekly",
+                "monthly"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "link",
+            "schema": {
+              "enum": [
+                "public",
+                "private"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Traffic"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Traffic of the public or private link over the last hour, day, week or month",
+        "x-codes": [
+          "no_live_data",
+          "supplier_unavailable"
+        ],
+        "x-permission": "baremetal:view"
+      }
+    },
+    "/suppliers": {
+      "get": {
+        "operationId": "listSuppliers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Supplier"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Companies servers are bought from, with their model count, countries and cheapest price"
+      }
+    }
+  },
+  "security": [
+    {
+      "session": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Arianet API gateway",
+      "url": "https://api.ariaservice.net/baremetal/v1"
+    }
+  ]
+}

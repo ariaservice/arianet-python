@@ -1,0 +1,55 @@
+name: Regenerate from specs
+
+# Pulls the published OpenAPI specs every day (and on demand), regenerates the
+# operation layer, runs the tests and opens a pull request when anything changed.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: regenerate
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Fetch specs
+        run: |
+          pip install pyyaml==6.0.2
+          python3 codegen/fetch_specs.py
+      - name: Generate
+        run: python3 codegen/generate.py
+      - name: Test
+        run: |
+          PYTHONPATH=src python -m unittest discover -s tests
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- specs; then
+            echo "Specs unchanged."
+            exit 0
+          fi
+          branch=codegen/update-specs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add -A specs
+          git add -A .
+          git commit -m "Regenerate from the published OpenAPI specs"
+          git push --force origin "$branch"
+          if [ -z "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --head "$branch" --base main \
+              --title "Regenerate from the published OpenAPI specs" \
+              --body "The published OpenAPI specs changed. This PR updates \`specs/\` and the generated code; the tests passed in the regenerate job. Review the API changes, then merge and tag a release."
+          fi

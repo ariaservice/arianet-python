@@ -1,0 +1,3514 @@
+{
+  "components": {
+    "parameters": {
+      "DatacenterId": {
+        "in": "path",
+        "name": "datacenter_id",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "Id": {
+        "in": "path",
+        "name": "id",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "8-128 characters of `A-Z a-z 0-9 _ - : .`. Reuse the same key to retry the same order safely.",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": true,
+        "schema": {
+          "example": "order-7f3c9a52-0d1e-4a6b",
+          "maxLength": 128,
+          "minLength": 8,
+          "pattern": "^[A-Za-z0-9_\\-:.]{8,128}$",
+          "type": "string"
+        }
+      },
+      "Limit": {
+        "description": "Page size, 1-100 (an out-of-range value falls back to 15).",
+        "in": "query",
+        "name": "limit",
+        "schema": {
+          "default": 15,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "Page": {
+        "in": "query",
+        "name": "page",
+        "schema": {
+          "default": 1,
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    },
+    "requestBodies": {
+      "ServerIds": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "server_ids": {
+                  "items": {
+                    "format": "int64",
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "maxItems": 50,
+                  "minItems": 1,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "server_ids"
+              ],
+              "type": "object"
+            }
+          }
+        },
+        "required": true
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Malformed request. Codes `VALIDATION_ERROR`, `INVALID_ID`, `BAD_REQUEST`, `IDEMPOTENCY_KEY_REQUIRED`, `INVALID_IDEMPOTENCY_KEY`, `NO_DEFAULT_WALLET`."
+      },
+      "Conflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "An earlier request with the same Idempotency-Key is still running (`CONFLICT`). Retry shortly."
+      },
+      "Forbidden": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "`FORBIDDEN` (account not active, or not allowed to do this), `INSUFFICIENT_SCOPE` or `IP_NOT_ALLOWED`."
+      },
+      "InsufficientBalance": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "The wallet cannot cover the order (`INSUFFICIENT_BALANCE`)."
+      },
+      "Message": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "data": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "success": {
+                  "example": true,
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "Done"
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "No such resource in your account (`NOT_FOUND`)."
+      },
+      "RateLimited": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Too many requests (`RATE_LIMIT_EXCEEDED`). Back off; honour `Retry-After` when present.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "ServerActionAccepted": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "data": {
+                  "properties": {
+                    "message": {
+                      "example": "Restart started",
+                      "type": "string"
+                    },
+                    "server_id": {
+                      "format": "int64",
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "success": {
+                  "example": true,
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "The operation was accepted and is running."
+      },
+      "Unauthorized": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Missing, invalid, expired or revoked token (`UNAUTHORIZED`)."
+      },
+      "Unavailable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "The platform is temporarily unreachable (`UPSTREAM_UNAVAILABLE`, `WRITES_UNAVAILABLE`). Retry with the same Idempotency-Key."
+      },
+      "Unprocessable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "The request is well formed but cannot be done now (`VALIDATION_ERROR`), for example the server is protected, the plan is sold out, or an Idempotency-Key was reused with a different body. `FEATURE_NOT_SUPPORTED` means the datacenter does not offer the requested resource (a firewall or SSH key); check `supports` in `GET /regions`."
+      },
+      "Upstream": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "The platform could not complete the request (`UPSTREAM_ERROR`). Nothing is exposed about why; retry, and contact support if it persists."
+      }
+    },
+    "schemas": {
+      "CreateServerRequest": {
+        "properties": {
+          "auth_type": {
+            "default": "password",
+            "enum": [
+              "password",
+              "ssh"
+            ],
+            "type": "string"
+          },
+          "auth_value": {
+            "description": "Root password. Required when `auth_type` is `password`.",
+            "type": "string"
+          },
+          "currency_id": {
+            "description": "Wallet currency to pay with. Defaults to the currency of your primary wallet (`NO_DEFAULT_WALLET` if there is none).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "datacenter_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "hostname": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "hostnames": {
+            "description": "Alias of `hostname`; wins when both are sent.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "os_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "plan_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "project_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "service_count": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "ssh_key_id": {
+            "description": "Required when `auth_type` is `ssh` (`auth_id` is accepted as an alias).",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plan_id",
+          "datacenter_id",
+          "os_id"
+        ],
+        "type": "object"
+      },
+      "CreatedServer": {
+        "description": "What is known the moment creation is accepted. IP addresses usually appear a little later; read the server again.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "nullable": true,
+            "type": "string"
+          },
+          "datacenter": {
+            "properties": {
+              "id": {
+                "format": "int64",
+                "nullable": true,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "instance_status": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ip_addresses": {
+            "items": {
+              "properties": {
+                "ip": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "os": {
+            "properties": {
+              "name": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "plan": {
+            "properties": {
+              "name": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "protected": {
+            "type": "boolean"
+          },
+          "root_password": {
+            "description": "Returned only here (and on an idempotent replay). Absent for ssh-key servers.",
+            "type": "string"
+          },
+          "status": {
+            "example": "creating",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Currency": {
+        "properties": {
+          "code": {
+            "example": "USD",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "symbol": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Datacenter": {
+        "description": "`id` is the `datacenter_id` used everywhere else.",
+        "properties": {
+          "country_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "features": {
+            "items": {
+              "properties": {
+                "details": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "name": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "flag": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supports": {
+            "description": "Optional resources this datacenter offers. Creating one where it is `false` is refused with `422 FEATURE_NOT_SUPPORTED`.",
+            "properties": {
+              "firewalls": {
+                "type": "boolean"
+              },
+              "ssh_keys": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "Error": {
+        "properties": {
+          "error": {
+            "properties": {
+              "code": {
+                "enum": [
+                  "UNAUTHORIZED",
+                  "FORBIDDEN",
+                  "IP_NOT_ALLOWED",
+                  "INSUFFICIENT_SCOPE",
+                  "NOT_FOUND",
+                  "VALIDATION_ERROR",
+                  "RATE_LIMIT_EXCEEDED",
+                  "INVALID_ID",
+                  "IDEMPOTENCY_KEY_REQUIRED",
+                  "INVALID_IDEMPOTENCY_KEY",
+                  "NO_DEFAULT_WALLET",
+                  "INSUFFICIENT_BALANCE",
+                  "BAD_REQUEST",
+                  "CONFLICT",
+                  "REQUEST_FAILED",
+                  "UPSTREAM_ERROR",
+                  "UPSTREAM_UNAVAILABLE",
+                  "WRITES_UNAVAILABLE",
+                  "INTERNAL_ERROR"
+                ],
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "success": {
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "Firewall": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "datacenter_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "protected": {
+            "type": "boolean"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/FirewallRule"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "FirewallRule": {
+        "properties": {
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "ingress",
+              "egress"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier to delete the rule with.",
+            "type": "string"
+          },
+          "port_range": {
+            "nullable": true,
+            "type": "string"
+          },
+          "protocol": {
+            "enum": [
+              "tcp",
+              "udp",
+              "icmp",
+              "esp",
+              "gre"
+            ],
+            "type": "string"
+          },
+          "remote_ip": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Invoice": {
+        "properties": {
+          "discount": {
+            "format": "double",
+            "type": "number"
+          },
+          "due_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "issued_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "items": {
+            "description": "Only on `GET /invoices/{number}`.",
+            "items": {
+              "properties": {
+                "amount": {
+                  "format": "double",
+                  "type": "number"
+                },
+                "currency": {
+                  "$ref": "#/components/schemas/Currency"
+                },
+                "description": {
+                  "nullable": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "number": {
+            "example": "INV-2026-000123",
+            "type": "string"
+          },
+          "paid_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "payment_status": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "issued",
+              "paid",
+              "overdue",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "subtotal": {
+            "format": "double",
+            "type": "number"
+          },
+          "tax": {
+            "format": "double",
+            "type": "number"
+          },
+          "total": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "OsGroup": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer"
+          },
+          "templates": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/OsTemplate"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OsTemplate": {
+        "properties": {
+          "children": {
+            "description": "Versions of this operating system.",
+            "properties": {
+              "data": {
+                "items": {
+                  "properties": {
+                    "id": {
+                      "description": "Use as `os_id`.",
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "image_file": {
+                      "type": "string"
+                    },
+                    "meta_data": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "datacenter": {
+            "properties": {
+              "display_name": {
+                "nullable": true,
+                "type": "string"
+              },
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "description": "Use as `os_id`.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "image_file": {
+            "type": "string"
+          },
+          "meta_data": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "os_group": {
+            "properties": {
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "status": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "Pagination": {
+        "properties": {
+          "current_page": {
+            "example": 1,
+            "type": "integer"
+          },
+          "last_page": {
+            "example": 3,
+            "type": "integer"
+          },
+          "per_page": {
+            "example": 15,
+            "type": "integer"
+          },
+          "total": {
+            "example": 40,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Plan": {
+        "properties": {
+          "cpu": {
+            "$ref": "#/components/schemas/ResourceValue"
+          },
+          "cycle": {
+            "example": "hourly",
+            "nullable": true,
+            "type": "string"
+          },
+          "display_name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "Use as `plan_id`.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prices": {
+            "items": {
+              "properties": {
+                "code": {
+                  "description": "Currency code",
+                  "example": "USD",
+                  "type": "string"
+                },
+                "currency": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "hourly": {
+                  "example": "0.0070",
+                  "type": "string"
+                },
+                "monthly": {
+                  "example": "4.50",
+                  "type": "string"
+                },
+                "yearly": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "ram": {
+            "$ref": "#/components/schemas/ResourceValue"
+          },
+          "recommended": {
+            "type": "boolean"
+          },
+          "storage": {
+            "$ref": "#/components/schemas/ResourceValue"
+          }
+        },
+        "type": "object"
+      },
+      "PlanGroup": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/Plan"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Region": {
+        "properties": {
+          "country_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "datacenters": {
+            "items": {
+              "$ref": "#/components/schemas/Datacenter"
+            },
+            "type": "array"
+          },
+          "flag": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "is_region": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceValue": {
+        "properties": {
+          "size": {
+            "example": 2,
+            "type": "integer"
+          },
+          "unit": {
+            "example": "GB",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Server": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cycle": {
+            "example": "hourly",
+            "nullable": true,
+            "type": "string"
+          },
+          "datacenter": {
+            "properties": {
+              "country": {
+                "nullable": true,
+                "type": "string"
+              },
+              "display_name": {
+                "nullable": true,
+                "type": "string"
+              },
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "hostname": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "instance_status": {
+            "description": "Status reported by the provider: `RUNNING`, `STOPPED`, `REBOOTING`, `REBUILDING`, `BUILD`, `ERROR`, ...",
+            "nullable": true,
+            "type": "string"
+          },
+          "ip_addresses": {
+            "items": {
+              "properties": {
+                "ip": {
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "primary",
+                    "secondary",
+                    "floating"
+                  ],
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "os": {
+            "properties": {
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "plan": {
+            "properties": {
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "protected": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "status": {
+            "description": "Platform status: `creating`, `active`, `suspended`, `powering_on`, `powering_off`, `restarting`, `reinstalling_os`, `failed`, `terminated`, ...",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ServerAction": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "success",
+              "failed"
+            ],
+            "example": "success",
+            "type": "string"
+          },
+          "type": {
+            "example": "restart",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SshKey": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "datacenter_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "key": {
+            "description": "The public key.",
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "protected": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "Token": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_used": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prefix": {
+            "description": "First characters of the token, to recognise it.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Transaction": {
+        "properties": {
+          "amount": {
+            "format": "double",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "mode": {
+            "description": "`credit` or `debit`.",
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "status": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "User": {
+        "properties": {
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "mobile": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "example": "active",
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "Wallet": {
+        "properties": {
+          "balance": {
+            "format": "double",
+            "type": "number"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "primary": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "description": "Personal API token. Scopes a token may carry: `regions:read`, `os:read`,\n`plans:read`, `servers:read`, `servers:write`, `balance:read`, `invoices:read`,\n`ssh-keys:read`, `ssh-keys:write`, `firewalls:read`, `firewalls:write`,\n`tokens:read`, `tokens:write`. A token with no scopes may do everything.\n",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "email": "support@arianet.io",
+      "name": "Arianet Support",
+      "url": "https://support.arianet.io"
+    },
+    "description": "Public web service for buying and managing Arianet cloud servers. It is the\nsame service the `arianet` CLI, the Telegram bot and partner integrations use.\n\n## Authentication\n\nEvery endpoint needs a personal API token created in the panel\n(**Settings → API Tokens**), sent as a Bearer token:\n\n```\nAuthorization: Bearer <token>\n```\n\nA token can be restricted to a set of **scopes** and to an **IP allowlist**.\nA token created without scopes is unrestricted. A request outside the token's\nscopes answers `403 INSUFFICIENT_SCOPE`; from a disallowed address,\n`403 IP_NOT_ALLOWED`.\n\n## Response envelope\n\n```json\n{ \"success\": true, \"data\": { } }\n{ \"success\": true, \"data\": [ ], \"pagination\": { \"current_page\": 1, \"per_page\": 15, \"total\": 40, \"last_page\": 3 } }\n{ \"success\": false, \"error\": { \"code\": \"INSUFFICIENT_BALANCE\", \"message\": \"Not enough balance. Required balance: 4.50\" } }\n```\n\nBranch on `error.code`; `error.message` is for humans and may change.\n\n## Asynchronous operations\n\nCreating, deleting, reinstalling, restarting and powering a server on or off\nanswer **202 Accepted**: the request was validated and started, the work is\nnot finished. Poll `GET /servers/{id}/status` until `status` is `active` and\n`instance_status` is `RUNNING` (or `STOPPED` after a power-off), or read `GET /servers/{id}/actions` for the operation history.\n\n## Idempotency\n\n`POST /servers` spends money, so it requires an `Idempotency-Key` header\n(8-128 characters of `A-Z a-z 0-9 _ - : .`, for example a UUID). Retrying with\nthe same key and the same body never buys a second server: the original answer\nis replayed for 24 hours with the header `Idempotent-Replayed: true`. The same\nkey with a different body answers `422`; a retry while the first request is\nstill running answers `409 CONFLICT` - wait a few seconds and retry.\nTreat the key like a secret: the replayed answer contains the root password.\n\n## Rate limits\n\nLimits are per user (creation: per token). When exceeded the API answers\n`429 RATE_LIMIT_EXCEEDED`; creation also sends `Retry-After`.\n\n| Group | Limit |\n|---|---|\n| Reads | 120 / minute, burst 20 |\n| Writes (actions, ssh keys, firewalls, tokens) | about 20 / minute, burst 5 |\n| `POST /servers` | 5 / hour sustained per token, plus 10 / hour per account |\n",
+    "title": "Arianet Cloud API",
+    "version": "1.1.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/auth/logout": {
+      "delete": {
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Message"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Revoke the token used for this request",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "getMe",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The user the token belongs to"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Current user",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/tokens": {
+      "get": {
+        "description": "Needs scope `tokens:read`.",
+        "operationId": "listTokens",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "tokens": {
+                          "items": {
+                            "$ref": "#/components/schemas/Token"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Tokens of the calling user. The secret value is never returned."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "List API tokens",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/tokens/{id}": {
+      "delete": {
+        "description": "Needs scope `tokens:write`.",
+        "operationId": "revokeToken",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Message"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Revoke a token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/balance": {
+      "get": {
+        "description": "Needs scope `balance:read`. One wallet per currency; `primary` marks the default wallet used when `currency_id` is omitted at server creation.",
+        "operationId": "getBalance",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "wallets": {
+                          "items": {
+                            "$ref": "#/components/schemas/Wallet"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Wallets"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Wallet balances",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/balance/transactions": {
+      "get": {
+        "description": "Needs scope `balance:read`.",
+        "operationId": "listTransactions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      },
+                      "type": "array"
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of transactions"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Wallet transactions",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/firewalls": {
+      "get": {
+        "description": "Needs scope `firewalls:read`.",
+        "operationId": "listFirewalls",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Firewall"
+                      },
+                      "type": "array"
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of firewalls"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "List firewalls",
+        "tags": [
+          "Firewalls"
+        ]
+      },
+      "post": {
+        "description": "Needs scope `firewalls:write`. The firewall is created empty at the provider;\nadd rules with `POST /firewalls/{id}/rules` and attach it to servers with\n`POST /firewalls/{id}/attach`.\n",
+        "operationId": "createFirewall",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "datacenter_id": {
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "description": {
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "datacenter_id"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Firewall"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Create a firewall",
+        "tags": [
+          "Firewalls"
+        ]
+      }
+    },
+    "/firewalls/{id}": {
+      "delete": {
+        "description": "Needs scope `firewalls:write`.",
+        "operationId": "deleteFirewall",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Message"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Delete a firewall",
+        "tags": [
+          "Firewalls"
+        ]
+      },
+      "get": {
+        "description": "Needs scope `firewalls:read`.",
+        "operationId": "getFirewall",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Firewall"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The firewall"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Get a firewall with its rules",
+        "tags": [
+          "Firewalls"
+        ]
+      },
+      "put": {
+        "description": "Needs scope `firewalls:write`. At least one field is required. The answer\ncarries no rules; read the firewall again if you need them.\n",
+        "operationId": "updateFirewall",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "description": {
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Firewall"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Updated"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Update a firewall",
+        "tags": [
+          "Firewalls"
+        ]
+      }
+    },
+    "/firewalls/{id}/attach": {
+      "post": {
+        "description": "Needs scope `firewalls:write`. The servers must be in the firewall's datacenter.",
+        "operationId": "attachFirewall",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ServerIds"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Message"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Attach a firewall to servers",
+        "tags": [
+          "Firewalls"
+        ]
+      }
+    },
+    "/firewalls/{id}/detach": {
+      "post": {
+        "description": "Needs scope `firewalls:write`.",
+        "operationId": "detachFirewall",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ServerIds"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Message"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Detach a firewall from servers",
+        "tags": [
+          "Firewalls"
+        ]
+      }
+    },
+    "/firewalls/{id}/rules": {
+      "post": {
+        "description": "Needs scope `firewalls:write`. The answer is the new rule, including the `id` to delete it with.",
+        "operationId": "addFirewallRule",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "description": {
+                    "maxLength": 255,
+                    "type": "string"
+                  },
+                  "direction": {
+                    "enum": [
+                      "ingress",
+                      "egress"
+                    ],
+                    "type": "string"
+                  },
+                  "port_range": {
+                    "example": "443",
+                    "maxLength": 50,
+                    "type": "string"
+                  },
+                  "protocol": {
+                    "enum": [
+                      "tcp",
+                      "udp",
+                      "icmp",
+                      "esp",
+                      "gre"
+                    ],
+                    "type": "string"
+                  },
+                  "remote_ip": {
+                    "example": "0.0.0.0/0",
+                    "maxLength": 100,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "direction",
+                  "protocol"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FirewallRule"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Rule added"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Add a rule",
+        "tags": [
+          "Firewalls"
+        ]
+      }
+    },
+    "/firewalls/{id}/rules/{rule_id}": {
+      "delete": {
+        "description": "Needs scope `firewalls:write`. `rule_id` is the rule's `id` from the firewall's `rules` (a string).",
+        "operationId": "deleteFirewallRule",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          },
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Message"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Delete a rule",
+        "tags": [
+          "Firewalls"
+        ]
+      }
+    },
+    "/invoices": {
+      "get": {
+        "description": "Needs scope `invoices:read`. Zero-amount invoices are not listed.",
+        "operationId": "listInvoices",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "draft",
+                "issued",
+                "paid",
+                "overdue",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Invoice"
+                      },
+                      "type": "array"
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of invoices"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "List invoices",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/invoices/{number}": {
+      "get": {
+        "description": "Needs scope `invoices:read`. The number is text, for example `2041` or `INV-2026-000123`.",
+        "operationId": "getInvoice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9-]{1,50}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Invoice"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The invoice"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Get an invoice with its line items",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/os/datacenter/{datacenter_id}": {
+      "get": {
+        "description": "Needs scope `os:read`. The `id` of a template (or of one of its `children`) is the `os_id` for server creation.",
+        "operationId": "listOsByDatacenter",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DatacenterId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "groups": {
+                          "items": {
+                            "$ref": "#/components/schemas/OsGroup"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Operating systems grouped by family"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Operating systems available in a datacenter",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/plans/datacenter/{datacenter_id}": {
+      "get": {
+        "description": "Needs scope `plans:read`.",
+        "operationId": "listPlansByDatacenter",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DatacenterId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "groups": {
+                          "items": {
+                            "$ref": "#/components/schemas/PlanGroup"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Plans grouped by family, with prices"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Plans orderable in a datacenter",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/plans/{id}": {
+      "get": {
+        "description": "Needs scope `plans:read`.",
+        "operationId": "getPlan",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Plan"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The plan"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "One plan",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/regions": {
+      "get": {
+        "description": "Needs scope `regions:read`.",
+        "operationId": "listRegions",
+        "parameters": [
+          {
+            "description": "`1` or `true` returns internal datacenter names instead of display names (not cached).",
+            "in": "query",
+            "name": "system_name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "items": {
+                          "items": {
+                            "$ref": "#/components/schemas/Region"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Regions with their datacenters"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Regions and datacenters",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/servers": {
+      "get": {
+        "description": "Needs scope `servers:read`.",
+        "operationId": "listServers",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "description": "Filter by server status.",
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "example": "active",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Server"
+                      },
+                      "type": "array"
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of servers"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "List servers",
+        "tags": [
+          "Servers"
+        ]
+      },
+      "post": {
+        "description": "Needs scope `servers:write`. The cost is reserved from the wallet at once.\nAnswers **202**: the server is being provisioned, poll it until it is `active`.\n\nAuthentication is either `password` (default; `auth_value` is the root\npassword) or `ssh` (`ssh_key_id` of one of your SSH keys). The generated\nor chosen root password is returned in this response only.\n",
+        "operationId": "createServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "password": {
+                  "summary": "Root password",
+                  "value": {
+                    "auth_type": "password",
+                    "auth_value": "Str0ng!Passw0rd",
+                    "datacenter_id": 9,
+                    "hostname": "web-1",
+                    "os_id": 55,
+                    "plan_id": 101
+                  }
+                },
+                "ssh": {
+                  "summary": "SSH key",
+                  "value": {
+                    "auth_type": "ssh",
+                    "datacenter_id": 9,
+                    "hostname": "web-1",
+                    "os_id": 55,
+                    "plan_id": 101,
+                    "ssh_key_id": 12
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateServerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CreatedServer"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Creation started",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` when this is the stored answer of an earlier request with the same key.",
+                "schema": {
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/InsufficientBalance"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Create a server",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}": {
+      "delete": {
+        "description": "Needs scope `servers:write`. Irreversible; a protected server must have\nprotection switched off first. Answers **202**.\n",
+        "operationId": "deleteServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "note": {
+                    "maxLength": 1000,
+                    "type": "string"
+                  },
+                  "reason": {
+                    "default": "other",
+                    "description": "Why the server is deleted (defaults to `other`).",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/ServerActionAccepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Delete a server",
+        "tags": [
+          "Servers"
+        ]
+      },
+      "get": {
+        "description": "Needs scope `servers:read`.",
+        "operationId": "getServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Server"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The server"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Get a server",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/actions": {
+      "get": {
+        "description": "Needs scope `servers:read`. Newest first.",
+        "operationId": "listServerActions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          },
+          {
+            "description": "Number of entries (1-100, default 15).",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 15,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "actions": {
+                          "items": {
+                            "$ref": "#/components/schemas/ServerAction"
+                          },
+                          "type": "array"
+                        },
+                        "server_id": {
+                          "format": "int64",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Recent operations"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Operation history of a server",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/power-off": {
+      "post": {
+        "description": "Needs scope `servers:write`. A powered-off server may still be billed.",
+        "operationId": "powerOffServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/ServerActionAccepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Power a server off",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/power-on": {
+      "post": {
+        "description": "Needs scope `servers:write`.",
+        "operationId": "powerOnServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/ServerActionAccepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Power a server on",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/reinstall": {
+      "post": {
+        "description": "Needs scope `servers:write`. **Erases all data on the server.** Answers 202.",
+        "operationId": "reinstallServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "os_id": {
+                    "format": "int64",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "os_id"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/ServerActionAccepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Reinstall the operating system",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/rename": {
+      "post": {
+        "description": "Needs scope `servers:write`. Applies immediately (200).",
+        "operationId": "renameServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "maxLength": 30,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "server_id": {
+                          "format": "int64",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Renamed"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Rename a server",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/restart": {
+      "post": {
+        "description": "Needs scope `servers:write`.",
+        "operationId": "restartServer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "soft",
+                      "hard"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/ServerActionAccepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Restart a server",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/status": {
+      "get": {
+        "description": "Needs scope `servers:read`. Cheap to poll.",
+        "operationId": "getServerStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "id": {
+                          "format": "int64",
+                          "type": "integer"
+                        },
+                        "instance_status": {
+                          "example": "RUNNING",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "status": {
+                          "example": "active",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Current status"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Lightweight status",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/servers/{id}/toggle-protection": {
+      "post": {
+        "description": "Needs scope `servers:write`. With `{\"enabled\": true|false}` the state is set\nexplicitly; with no body it flips the current state. Prefer the explicit form.\n",
+        "operationId": "toggleServerProtection",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "protected": {
+                          "type": "boolean"
+                        },
+                        "server_id": {
+                          "format": "int64",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Protection updated"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Set or flip delete protection",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/ssh-keys": {
+      "get": {
+        "description": "Needs scope `ssh-keys:read`.",
+        "operationId": "listSshKeys",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/SshKey"
+                      },
+                      "type": "array"
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of SSH keys"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "List SSH keys",
+        "tags": [
+          "SSH Keys"
+        ]
+      },
+      "post": {
+        "description": "Needs scope `ssh-keys:write`. A key belongs to one datacenter, because providers keep keys per location.",
+        "operationId": "createSshKey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "datacenter_id": {
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "is_protected": {
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "public_key": {
+                    "example": "ssh-ed25519 AAAAC3Nza... me@laptop",
+                    "maxLength": 4096,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "public_key",
+                  "datacenter_id"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SshKey"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Add an SSH key",
+        "tags": [
+          "SSH Keys"
+        ]
+      }
+    },
+    "/ssh-keys/{id}": {
+      "delete": {
+        "description": "Needs scope `ssh-keys:write`. Servers already created with the key are not affected.",
+        "operationId": "deleteSshKey",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Message"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Delete an SSH key",
+        "tags": [
+          "SSH Keys"
+        ]
+      },
+      "get": {
+        "description": "Needs scope `ssh-keys:read`.",
+        "operationId": "getSshKey",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SshKey"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The key"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "summary": "Get an SSH key",
+        "tags": [
+          "SSH Keys"
+        ]
+      },
+      "put": {
+        "description": "Needs scope `ssh-keys:write`. At least one field is required; the key material itself cannot be changed.",
+        "operationId": "updateSshKey",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "is_protected": {
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SshKey"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Updated"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/Upstream"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "summary": "Update an SSH key",
+        "tags": [
+          "SSH Keys"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Arianet API gateway",
+      "url": "https://api.ariaservice.net/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "description": "The calling user and their API tokens",
+      "name": "Auth"
+    },
+    {
+      "description": "Regions, operating systems and plans (public catalogue data)",
+      "name": "Catalog"
+    },
+    {
+      "description": "Server lifecycle and actions",
+      "name": "Servers"
+    },
+    {
+      "description": "Public keys that can be injected into new servers",
+      "name": "SSH Keys"
+    },
+    {
+      "description": "Provider firewalls and their rules",
+      "name": "Firewalls"
+    },
+    {
+      "description": "Wallet balance, transactions and invoices",
+      "name": "Billing"
+    }
+  ]
+}

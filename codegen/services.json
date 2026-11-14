@@ -1,0 +1,72 @@
+{
+  "gateway": "https://api.ariaservice.net",
+  "services": [
+    {
+      "key": "core",
+      "title": "Core API: account, API tokens, classic VPS, SSH keys, firewalls, balance and invoices",
+      "source": "https://docs.ariaservice.net/openapi.yaml",
+      "prefix": "/api/v1"
+    },
+    {
+      "key": "cloud",
+      "title": "Cloud API: servers, volumes, networks, firewalls, floating IPs, load balancers",
+      "source": "https://api.ariaservice.net/cloud/v1/openapi.json",
+      "prefix": "/cloud/v1"
+    },
+    {
+      "key": "regional_vps",
+      "title": "Regional VPS API",
+      "source": "https://api.ariaservice.net/vps/v1/openapi.json",
+      "prefix": "/vps/v1"
+    },
+    {
+      "key": "hosting",
+      "title": "Hosting API",
+      "source": "https://api.ariaservice.net/hosting/v1/openapi.json",
+      "prefix": "/hosting/v1"
+    },
+    {
+      "key": "baremetal",
+      "title": "Dedicated servers (bare metal) API",
+      "source": "https://api.ariaservice.net/baremetal/v1/openapi.json",
+      "prefix": "/baremetal/v1"
+    },
+    {
+      "key": "sms",
+      "title": "SMS API",
+      "source": "https://api.ariaservice.net/sms/v1/openapi.json",
+      "prefix": "/sms/v1"
+    }
+  ],
+  "exclude": [
+    "GET /openapi.json",
+    "GET /console/ws"
+  ],
+  "operation_names": {
+    "sms": {
+      "GET /messages": "listMessages",
+      "POST /messages": "sendMessage",
+      "GET /messages/{message}": "getMessage",
+      "GET /batches": "listBatches",
+      "GET /batches/{batch}": "getBatch",
+      "GET /scheduled": "listScheduled",
+      "DELETE /scheduled/{scheduled}": "cancelScheduled",
+      "GET /inbound": "listInbound",
+      "GET /lines": "listLines",
+      "POST /lines": "requestLine",
+      "GET /templates": "listTemplates",
+      "POST /templates": "createTemplate",
+      "GET /templates/{template}": "getTemplate",
+      "PUT /templates/{template}": "updateTemplate",
+      "DELETE /templates/{template}": "deleteTemplate",
+      "GET /blocked-recipients": "listBlockedRecipients",
+      "POST /blocked-recipients": "blockRecipient",
+      "DELETE /blocked-recipients/{blockedRecipient}": "unblockRecipient",
+      "GET /webhook": "getWebhook",
+      "PUT /webhook": "setWebhook",
+      "POST /webhook/secret": "rotateWebhookSecret",
+      "GET /reports/summary": "getReportSummary",
+      "GET /prices": "getPrices"
+    }
+  }
+}
