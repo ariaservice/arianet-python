@@ -798,6 +798,7 @@
               "order_unavailable",
               "panel_account_missing",
               "panel_unavailable",
+              "payment_hold",
               "php_selector_disabled",
               "php_selector_needs_cagefs",
               "php_selector_unavailable",

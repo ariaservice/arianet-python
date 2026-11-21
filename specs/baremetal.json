@@ -341,8 +341,10 @@
               "invalid_stage",
               "invalid_transition",
               "ip_",
+              "ip_billed_by_iplease",
               "ip_not_found",
               "ip_not_routed",
+              "ip_orders_moved",
               "ip_renew_automatic",
               "ips_not_sold",
               "method_not_allowed",
@@ -3172,6 +3174,106 @@
           }
         ],
         "summary": "A model's datacenters and every option family (memory, disks, network, GPU, licences) with prices and delivery for the choices so far"
+      }
+    },
+    "/provider-ips/servers": {
+      "get": {
+        "description": "Requires the `baremetal:view` permission.",
+        "operationId": "listProviderIPServers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "datacenter": {
+                            "type": "string"
+                          },
+                          "datacenter_label_fa": {
+                            "type": "string"
+                          },
+                          "eligible": {
+                            "type": "boolean"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "product": {
+                            "type": "string"
+                          },
+                          "reason_fa": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "region": {
+                            "type": "string"
+                          },
+                          "registry": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "server_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "server_id",
+                          "datacenter",
+                          "eligible"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Your servers an additional IP (bought in the IP product) can go to, with each datacenter's registry, and why not",
+        "x-permission": "baremetal:view"
       }
     },
     "/quote": {

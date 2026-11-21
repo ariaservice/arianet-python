@@ -3466,7 +3466,7 @@ class RegionalVPSService(Service):
         idempotency_key: Optional[str] = None,
         headers: Optional[Mapping[str, str]] = None,
     ) -> Any:
-        """Set the root password. Without one it is generated and returned once in this answer
+        """Set the root password. Without one it is generated and returned once in this answer. An image of kind routeros or other has none (422 unsupported_image: use the console)
 
         ``POST /servers/{id}/reset-password``
         """
@@ -5142,6 +5142,26 @@ class BaremetalService(Service):
             headers=headers,
         )
 
+    def list_provider_ip_servers(
+        self,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Your servers an additional IP (bought in the IP product) can go to, with each datacenter's registry, and why not
+
+        ``GET /provider-ips/servers``
+        """
+        return self._request(
+            "GET",
+            "/baremetal/v1/provider-ips/servers",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
     def quote(
         self,
         body: Any,
@@ -5623,6 +5643,47 @@ class SMSService(Service):
 
     _prefix = "/sms/v1"
 
+    def get_application(
+        self,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """The activation request and whether one is needed
+
+        ``GET /application``
+        """
+        return self._request(
+            "GET",
+            "/sms/v1/application",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def create_application(
+        self,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Submit the activation request (reviewed before the account can send)
+
+        ``POST /application``
+        """
+        return self._request(
+            "POST",
+            "/sms/v1/application",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
     def list_batches(
         self,
         *,
@@ -5829,7 +5890,7 @@ class SMSService(Service):
         idempotency_key: Optional[str] = None,
         headers: Optional[Mapping[str, str]] = None,
     ) -> Any:
-        """Send a message to one or more recipients (or schedule it)
+        """Send an approved template to up to 100 recipients (only for accounts staff opened for direct sending; otherwise 403 direct_send_disabled - use /verify/lookup)
 
         ``POST /messages``
         """
@@ -6051,6 +6112,27 @@ class SMSService(Service):
             "/sms/v1/templates/" + path_segment(template),
             query=None,
             body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def create_verify_lookup(
+        self,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Send an approved template to one recipient (verification codes, notices)
+
+        ``POST /verify/lookup``
+        """
+        return self._request(
+            "POST",
+            "/sms/v1/verify/lookup",
+            query=None,
+            body=body,
             idempotent=False,
             idempotency_key=idempotency_key,
             headers=headers,

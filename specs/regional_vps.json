@@ -338,6 +338,7 @@
               "task_timeout",
               "unauthorized",
               "unavailable",
+              "unsupported_image",
               "vm_not_found"
             ],
             "type": "string"
@@ -370,6 +371,16 @@
             "format": "int64",
             "type": "integer"
           },
+          "kind": {
+            "description": "What the image is. linux and windows take a root password (generated when none is sent) and offer a password reset; routeros and other take none and set up their own access (use the console).",
+            "enum": [
+              "linux",
+              "routeros",
+              "windows",
+              "other"
+            ],
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -389,6 +400,7 @@
           "name",
           "os_family",
           "os_version",
+          "kind",
           "datacenters"
         ],
         "type": "object"
@@ -1570,7 +1582,7 @@
                     "type": "string"
                   },
                   "password": {
-                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit.",
+                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit. Ignored for an image of kind routeros or other, which takes no password.",
                     "maxLength": 128,
                     "minLength": 8,
                     "type": "string"
@@ -1610,7 +1622,7 @@
                       "$ref": "#/components/schemas/Server"
                     },
                     "password": {
-                      "description": "The generated root password when none was sent, shown only here.",
+                      "description": "The generated root password when none was sent and the image takes one, shown only here; null otherwise.",
                       "type": [
                         "string",
                         "null"
@@ -2125,7 +2137,7 @@
                     "type": "string"
                   },
                   "password": {
-                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit.",
+                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit. Ignored for an image of kind routeros or other, which takes no password.",
                     "maxLength": 128,
                     "minLength": 8,
                     "type": "string"
@@ -2231,7 +2243,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "password": {
-                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit.",
+                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit. Ignored for an image of kind routeros or other, which takes no password.",
                     "maxLength": 128,
                     "minLength": 8,
                     "type": "string"
@@ -2300,8 +2312,9 @@
             "session": []
           }
         ],
-        "summary": "Set the root password. Without one it is generated and returned once in this answer",
+        "summary": "Set the root password. Without one it is generated and returned once in this answer. An image of kind routeros or other has none (422 unsupported_image: use the console)",
         "x-codes": [
+          "unsupported_image",
           "feature_unavailable",
           "action_in_progress",
           "rate_limit_exceeded",
