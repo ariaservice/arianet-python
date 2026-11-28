@@ -15,6 +15,61 @@
     "schemas": {
       "Action": {
         "properties": {
+          "address_check": {
+            "description": "A create only: the address check's progress; null while provisioning.",
+            "properties": {
+              "changes": {
+                "description": "Moves off a filtered address so far.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "checks": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "iran_ok": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "iran_total": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "max_checks": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "state": {
+                "enum": [
+                  "waiting_boot",
+                  "checking",
+                  "changing_ip",
+                  "done"
+                ],
+                "type": "string"
+              },
+              "verdict": {
+                "type": "string"
+              },
+              "world_ok": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "world_total": {
+                "format": "int64",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "state",
+              "checks",
+              "max_checks"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "command": {
             "enum": [
               "create",
@@ -64,6 +119,14 @@
             "format": "int64",
             "type": "integer"
           },
+          "phase": {
+            "description": "A create only: the host builds the server, then its address is checked from Iran and abroad before handover (#1278).",
+            "enum": [
+              "provisioning",
+              "address_check"
+            ],
+            "type": "string"
+          },
           "progress": {
             "format": "int64",
             "maximum": 100,
@@ -102,6 +165,186 @@
           "started_at",
           "finished_at"
         ],
+        "type": "object"
+      },
+      "Backup": {
+        "description": "A backup or snapshot (arianet-infra-tasks#1269).",
+        "properties": {
+          "completed_at": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "disk_bytes": {
+            "description": "The server's disk size when it was taken.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "error": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "auto",
+              "manual",
+              "snapshot"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "A snapshot's name.",
+            "type": "string"
+          },
+          "quiesced": {
+            "description": "Taken with the filesystems frozen.",
+            "type": "boolean"
+          },
+          "size_bytes": {
+            "description": "The size of the disk it was taken of: what it is shown as, and what a snapshot is billed on.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "creating",
+              "available",
+              "restoring",
+              "failed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "BackupRetention": {
+        "description": "What happens to a deleted server's backups.",
+        "properties": {
+          "mode": {
+            "enum": [
+              "until_balance",
+              "week",
+              "purge"
+            ],
+            "type": "string"
+          },
+          "purge_after": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "BackupState": {
+        "description": "A server's backups and snapshots.",
+        "properties": {
+          "backups": {
+            "items": {
+              "$ref": "#/components/schemas/Backup"
+            },
+            "type": "array"
+          },
+          "capacity_ok": {
+            "description": "False: no new add-on or snapshot can be taken now.",
+            "type": "boolean"
+          },
+          "enabled": {
+            "description": "The backup add-on is on.",
+            "type": "boolean"
+          },
+          "enabled_at": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price": {
+            "properties": {
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "retention": {
+            "$ref": "#/components/schemas/BackupRetention"
+          },
+          "slots": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshot_price": {
+            "properties": {
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/Backup"
+            },
+            "type": "array"
+          },
+          "supported": {
+            "description": "The server's host keeps backups.",
+            "type": "boolean"
+          },
+          "surcharge_percent": {
+            "description": "The add-on's price as a percent of the plan.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "used_slots": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "Billing": {
@@ -189,6 +432,23 @@
       },
       "Datacenter": {
         "properties": {
+          "backups": {
+            "description": "The backup add-on for the order form (#1269).",
+            "properties": {
+              "supported": {
+                "description": "Servers there can have the backup add-on.",
+                "type": "boolean"
+              },
+              "surcharge_percent": {
+                "description": "The add-on's price as a percent of the plan.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
           "capabilities": {
             "anyOf": [
               {
@@ -266,6 +526,10 @@
             },
             "type": "array"
           },
+          "sold_out": {
+            "description": "Open for orders, but no plan fits on its hosts now (addresses, memory, CPU or storage); orderable is false while it is.",
+            "type": "boolean"
+          },
           "state": {
             "enum": [
               "active",
@@ -291,6 +555,12 @@
               "action_failed",
               "action_in_progress",
               "already_adopted",
+              "backup_busy",
+              "backup_capacity",
+              "backup_in_progress",
+              "backup_not_found",
+              "backup_slots_full",
+              "backups_disabled",
               "conflict",
               "core_unavailable",
               "create_rejected",
@@ -313,6 +583,7 @@
               "invalid_cursor",
               "invalid_input",
               "invalid_kind",
+              "invalid_snapshot_name",
               "invalid_state",
               "method_not_allowed",
               "name_taken",
@@ -338,6 +609,7 @@
               "task_timeout",
               "unauthorized",
               "unavailable",
+              "unsupported_image",
               "vm_not_found"
             ],
             "type": "string"
@@ -370,6 +642,16 @@
             "format": "int64",
             "type": "integer"
           },
+          "kind": {
+            "description": "What the image is. linux and windows take a root password (generated when none is sent) and offer a password reset; routeros and other take none and set up their own access (use the console).",
+            "enum": [
+              "linux",
+              "routeros",
+              "windows",
+              "other"
+            ],
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -389,6 +671,7 @@
           "name",
           "os_family",
           "os_version",
+          "kind",
           "datacenters"
         ],
         "type": "object"
@@ -409,7 +692,7 @@
             "type": "integer"
           },
           "datacenters": {
-            "description": "Datacenter codes it can be ordered in.",
+            "description": "Datacenter codes it can be ordered in now.",
             "items": {
               "type": "string"
             },
@@ -446,6 +729,13 @@
           "ram_mb": {
             "format": "int64",
             "type": "integer"
+          },
+          "sold_out_datacenters": {
+            "description": "Datacenter codes that sell it but have no room for it now; an order there answers 409 sold_out.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "traffic_direction": {
             "description": "What counts against the quota; null: the datacenter's (download by default).",
@@ -503,6 +793,29 @@
       "Server": {
         "description": "capabilities is on GET /servers/{id} only.",
         "properties": {
+          "backup": {
+            "description": "The backup add-on (#1269).",
+            "properties": {
+              "count": {
+                "description": "Available backups and snapshots.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "supported": {
+                "type": "boolean"
+              },
+              "surcharge_percent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
           "billing_mode": {
             "enum": [
               "hourly",
@@ -1264,6 +1577,98 @@
         "x-permission": "vps:view"
       }
     },
+    "/backups": {
+      "get": {
+        "description": "Requires the `vps:view` permission.",
+        "operationId": "listAccountBackups",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "backups": {
+                            "items": {
+                              "$ref": "#/components/schemas/Backup"
+                            },
+                            "type": "array"
+                          },
+                          "retention": {
+                            "$ref": "#/components/schemas/BackupRetention"
+                          },
+                          "server": {
+                            "properties": {
+                              "hostname": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "format": "int64",
+                                "type": "integer"
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "snapshots": {
+                            "items": {
+                              "$ref": "#/components/schemas/Backup"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Every visible backup and snapshot of your servers, deleted servers' retained ones included",
+        "x-permission": "vps:view"
+      }
+    },
     "/datacenters": {
       "get": {
         "operationId": "listDatacenters",
@@ -1550,6 +1955,10 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "backups": {
+                    "description": "Turn the backup add-on on with the server.",
+                    "type": "boolean"
+                  },
                   "billing_mode": {
                     "enum": [
                       "hourly",
@@ -1570,7 +1979,7 @@
                     "type": "string"
                   },
                   "password": {
-                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit.",
+                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit. Ignored for an image of kind routeros or other, which takes no password.",
                     "maxLength": 128,
                     "minLength": 8,
                     "type": "string"
@@ -1610,7 +2019,7 @@
                       "$ref": "#/components/schemas/Server"
                     },
                     "password": {
-                      "description": "The generated root password when none was sent, shown only here.",
+                      "description": "The generated root password when none was sent and the image takes one, shown only here; null otherwise.",
                       "type": [
                         "string",
                         "null"
@@ -1697,6 +2106,10 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "delete_backups": {
+                    "description": "Delete the server's backups and snapshots with it (48 h). Unset or false: they are kept and billed while the account has balance.",
+                    "type": "boolean"
+                  },
                   "reason": {
                     "description": "Why, as a short code (too_expensive, not_needed, ...).",
                     "pattern": "^[a-z][a-z_]{1,31}$",
@@ -2009,6 +2422,460 @@
         "x-permission": "vps:power:manage"
       }
     },
+    "/servers/{id}/backups": {
+      "get": {
+        "description": "Requires the `vps:view` permission.",
+        "operationId": "getServerBackups",
+        "parameters": [
+          {
+            "description": "Server id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BackupState"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The server's backups and snapshots, the add-on's state and prices",
+        "x-permission": "vps:view"
+      },
+      "post": {
+        "description": "Requires the `vps:backup:manage` permission.",
+        "operationId": "createServerBackup",
+        "parameters": [
+          {
+            "description": "Server id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {},
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Backup"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Take a manual backup now. It uses one of the 7 slots shared with the nightly backups",
+        "x-codes": [
+          "backups_disabled",
+          "backup_slots_full",
+          "backup_in_progress",
+          "feature_unavailable",
+          "rate_limit_exceeded"
+        ],
+        "x-permission": "vps:backup:manage"
+      }
+    },
+    "/servers/{id}/backups/disable": {
+      "post": {
+        "description": "Requires the `vps:backup:manage` permission.",
+        "operationId": "disableServerBackups",
+        "parameters": [
+          {
+            "description": "Server id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BackupState"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Turn the backup add-on off: billing stops now and the backups are deleted after 48 hours. Snapshots stay",
+        "x-codes": [
+          "backups_disabled"
+        ],
+        "x-permission": "vps:backup:manage"
+      }
+    },
+    "/servers/{id}/backups/enable": {
+      "post": {
+        "description": "Requires the `vps:backup:manage` permission.",
+        "operationId": "enableServerBackups",
+        "parameters": [
+          {
+            "description": "Server id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BackupState"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Turn the backup add-on on: a nightly backup, 7 slots, billed as a percent of the plan",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "backup_capacity",
+          "feature_unavailable"
+        ],
+        "x-permission": "vps:backup:manage"
+      }
+    },
+    "/servers/{id}/backups/{backup}": {
+      "delete": {
+        "description": "Requires the `vps:backup:manage` permission.",
+        "operationId": "deleteServerBackup",
+        "parameters": [
+          {
+            "description": "Server id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Backup or snapshot id.",
+            "in": "path",
+            "name": "backup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Delete a backup or snapshot, also of a deleted server",
+        "x-codes": [
+          "backup_not_found",
+          "backup_busy"
+        ],
+        "x-permission": "vps:backup:manage"
+      }
+    },
+    "/servers/{id}/backups/{backup}/restore": {
+      "post": {
+        "description": "Requires the `vps:backup:manage` permission.",
+        "operationId": "restoreServerBackup",
+        "parameters": [
+          {
+            "description": "Server id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Backup or snapshot id.",
+            "in": "path",
+            "name": "backup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Restore a backup or snapshot onto the server: its disks are replaced and it restarts; everything after the backup is lost",
+        "x-codes": [
+          "backup_not_found",
+          "backup_busy",
+          "action_in_progress"
+        ],
+        "x-permission": "vps:backup:manage"
+      }
+    },
     "/servers/{id}/console": {
       "post": {
         "description": "Requires the `vps:console:access` permission.",
@@ -2125,7 +2992,7 @@
                     "type": "string"
                   },
                   "password": {
-                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit.",
+                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit. Ignored for an image of kind routeros or other, which takes no password.",
                     "maxLength": 128,
                     "minLength": 8,
                     "type": "string"
@@ -2231,7 +3098,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "password": {
-                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit.",
+                    "description": "8-128 printable ASCII characters with upper and lower case letters and a digit. Ignored for an image of kind routeros or other, which takes no password.",
                     "maxLength": 128,
                     "minLength": 8,
                     "type": "string"
@@ -2300,8 +3167,9 @@
             "session": []
           }
         ],
-        "summary": "Set the root password. Without one it is generated and returned once in this answer",
+        "summary": "Set the root password. Without one it is generated and returned once in this answer. An image of kind routeros or other has none (422 unsupported_image: use the console)",
         "x-codes": [
+          "unsupported_image",
           "feature_unavailable",
           "action_in_progress",
           "rate_limit_exceeded",
@@ -2410,6 +3278,104 @@
           "resize_failed"
         ],
         "x-permission": "vps:resize:manage"
+      }
+    },
+    "/servers/{id}/snapshots": {
+      "post": {
+        "description": "Requires the `vps:backup:manage` permission.",
+        "operationId": "createServerSnapshot",
+        "parameters": [
+          {
+            "description": "Server id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "description": "Latin letters and digits, with space . _ - between them.",
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 ._-]{0,62}[A-Za-z0-9])?$",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Backup"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Take a snapshot, kept until deleted and billed per GB",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "invalid_snapshot_name",
+          "backup_capacity",
+          "backup_in_progress",
+          "feature_unavailable"
+        ],
+        "x-permission": "vps:backup:manage"
       }
     },
     "/servers/{id}/traffic": {

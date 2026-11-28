@@ -3222,6 +3222,26 @@ class RegionalVPSService(Service):
             headers=headers,
         )
 
+    def list_account_backups(
+        self,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Every visible backup and snapshot of your servers, deleted servers' retained ones included
+
+        ``GET /backups``
+        """
+        return self._request(
+            "GET",
+            "/vps/v1/backups",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
     def list_datacenters(
         self,
         *,
@@ -3415,6 +3435,135 @@ class RegionalVPSService(Service):
             headers=headers,
         )
 
+    def get_server_backups(
+        self,
+        id: int | str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """The server's backups and snapshots, the add-on's state and prices
+
+        ``GET /servers/{id}/backups``
+        """
+        return self._request(
+            "GET",
+            "/vps/v1/servers/" + path_segment(id) + "/backups",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def create_server_backup(
+        self,
+        id: int | str,
+        body: Any = None,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Take a manual backup now. It uses one of the 7 slots shared with the nightly backups
+
+        ``POST /servers/{id}/backups``
+        """
+        return self._request(
+            "POST",
+            "/vps/v1/servers/" + path_segment(id) + "/backups",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def disable_server_backups(
+        self,
+        id: int | str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Turn the backup add-on off: billing stops now and the backups are deleted after 48 hours. Snapshots stay
+
+        ``POST /servers/{id}/backups/disable``
+        """
+        return self._request(
+            "POST",
+            "/vps/v1/servers/" + path_segment(id) + "/backups/disable",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def enable_server_backups(
+        self,
+        id: int | str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Turn the backup add-on on: a nightly backup, 7 slots, billed as a percent of the plan
+
+        ``POST /servers/{id}/backups/enable``
+        """
+        return self._request(
+            "POST",
+            "/vps/v1/servers/" + path_segment(id) + "/backups/enable",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def delete_server_backup(
+        self,
+        id: int | str,
+        backup: str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Delete a backup or snapshot, also of a deleted server
+
+        ``DELETE /servers/{id}/backups/{backup}``
+        """
+        return self._request(
+            "DELETE",
+            "/vps/v1/servers/" + path_segment(id) + "/backups/" + path_segment(backup),
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def restore_server_backup(
+        self,
+        id: int | str,
+        backup: str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Restore a backup or snapshot onto the server: its disks are replaced and it restarts; everything after the backup is lost
+
+        ``POST /servers/{id}/backups/{backup}/restore``
+        """
+        return self._request(
+            "POST",
+            "/vps/v1/servers/" + path_segment(id) + "/backups/" + path_segment(backup) + "/restore",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
     def get_console(
         self,
         id: int | str,
@@ -3466,7 +3615,7 @@ class RegionalVPSService(Service):
         idempotency_key: Optional[str] = None,
         headers: Optional[Mapping[str, str]] = None,
     ) -> Any:
-        """Set the root password. Without one it is generated and returned once in this answer
+        """Set the root password. Without one it is generated and returned once in this answer. An image of kind routeros or other has none (422 unsupported_image: use the console)
 
         ``POST /servers/{id}/reset-password``
         """
@@ -3495,6 +3644,28 @@ class RegionalVPSService(Service):
         return self._request(
             "POST",
             "/vps/v1/servers/" + path_segment(id) + "/resize",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def create_server_snapshot(
+        self,
+        id: int | str,
+        body: Any = None,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Take a snapshot, kept until deleted and billed per GB
+
+        ``POST /servers/{id}/snapshots``
+        """
+        return self._request(
+            "POST",
+            "/vps/v1/servers/" + path_segment(id) + "/snapshots",
             query=None,
             body=body,
             idempotent=False,
@@ -3724,6 +3895,116 @@ class HostingService(Service):
             "/hosting/v1/accounts/" + path_segment(id) + "/alerts",
             query={"limit": limit},
             body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def get_backups(
+        self,
+        id: int | str,
+        *,
+        refresh: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """The account's backups: whether its server keeps them, the add-on, its price, the restore points and downloads
+
+        ``GET /accounts/{id}/backups``
+        """
+        return self._request(
+            "GET",
+            "/hosting/v1/accounts/" + path_segment(id) + "/backups",
+            query={"refresh": refresh},
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def take_backup(
+        self,
+        id: int | str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Take a backup now, kept as one of the account's own (the oldest of 3 rotates out)
+
+        ``POST /accounts/{id}/backups``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/backups",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def set_backups(
+        self,
+        id: int | str,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Turn the backup add-on on or off. On is charged for the rest of the term (nothing when this term is already paid for it) and renews with the account; off refunds nothing and hides the restore points at once
+
+        ``PUT /accounts/{id}/backups``
+        """
+        return self._request(
+            "PUT",
+            "/hosting/v1/accounts/" + path_segment(id) + "/backups",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def download_backup(
+        self,
+        id: int | str,
+        point: str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Build a downloadable archive (a cPanel backup) of a restore point in the account's home; once the action succeeds it is in downloads (its result names the file), fetched with the File Manager login link, and deleted after 48 hours
+
+        ``POST /accounts/{id}/backups/{point}/download``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/backups/" + path_segment(point) + "/download",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def restore_backup(
+        self,
+        id: int | str,
+        point: str,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Restore a restore point over the account: everything (full), only the files and mail (files) or only the databases. The current data is overwritten; the plan and main domain stay as they are
+
+        ``POST /accounts/{id}/backups/{point}/restore``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/backups/" + path_segment(point) + "/restore",
+            query=None,
+            body=body,
             idempotent=False,
             idempotency_key=idempotency_key,
             headers=headers,
@@ -4125,6 +4406,93 @@ class HostingService(Service):
             headers=headers,
         )
 
+    def get_firewall(
+        self,
+        id: int | str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """IPs the server blocked for the account's sites, why, and its allowlist
+
+        ``GET /accounts/{id}/firewall``
+        """
+        return self._request(
+            "GET",
+            "/hosting/v1/accounts/" + path_segment(id) + "/firewall",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def allow_ip(
+        self,
+        id: int | str,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Allow an IP: never blocked for the account's sites
+
+        ``POST /accounts/{id}/firewall/allowed``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/firewall/allowed",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def disallow_ip(
+        self,
+        id: int | str,
+        ip: str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Take an IP off the account's allowlist
+
+        ``DELETE /accounts/{id}/firewall/allowed/{ip}``
+        """
+        return self._request(
+            "DELETE",
+            "/hosting/v1/accounts/" + path_segment(id) + "/firewall/allowed/" + path_segment(ip),
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def unblock_ip(
+        self,
+        id: int | str,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Lift a block of an IP raised for the account's sites
+
+        ``POST /accounts/{id}/firewall/unblock``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/firewall/unblock",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
     def login(
         self,
         id: int | str,
@@ -4473,6 +4841,98 @@ class HostingService(Service):
             headers=headers,
         )
 
+    def get_reseller_account_backups(
+        self,
+        id: int | str,
+        username: str,
+        *,
+        refresh: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """One of the reseller's customer accounts' backups, in the shape of an account's: its restore points (only those taken while the reseller owned it), manual backups, the running action and downloads. price and due_now are null (the add-on is the reseller account's). Also needs hosting:view
+
+        ``GET /accounts/{id}/reseller/accounts/{username}/backups``
+        """
+        return self._request(
+            "GET",
+            "/hosting/v1/accounts/" + path_segment(id) + "/reseller/accounts/" + path_segment(username) + "/backups",
+            query={"refresh": refresh},
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def reseller_take_account_backup(
+        self,
+        id: int | str,
+        username: str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Take a backup of one of the reseller's customer accounts now, kept as one of its own (the oldest of 3 rotates out). Also needs hosting:view and hosting:manage
+
+        ``POST /accounts/{id}/reseller/accounts/{username}/backups``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/reseller/accounts/" + path_segment(username) + "/backups",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def reseller_download_account_backup(
+        self,
+        id: int | str,
+        username: str,
+        point: str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Build a downloadable archive of a restore point in the customer account's home; fetch it with the customer account's File Manager login (POST .../login), deleted after 48 hours. Also needs hosting:view and hosting:manage
+
+        ``POST /accounts/{id}/reseller/accounts/{username}/backups/{point}/download``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/reseller/accounts/" + path_segment(username) + "/backups/" + path_segment(point) + "/download",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def reseller_restore_account_backup(
+        self,
+        id: int | str,
+        username: str,
+        point: str,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Restore one of the reseller's customer accounts from a restore point: everything (full), only the files and mail (files) or only the databases; its package and main domain stay. Also needs hosting:view and hosting:manage
+
+        ``POST /accounts/{id}/reseller/accounts/{username}/backups/{point}/restore``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/reseller/accounts/" + path_segment(username) + "/backups/" + path_segment(point) + "/restore",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
     def reseller_change_domain(
         self,
         id: int | str,
@@ -4647,6 +5107,49 @@ class HostingService(Service):
         return self._request(
             "GET",
             "/hosting/v1/accounts/" + path_segment(id) + "/reseller/packages",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def list_reseller_retained(
+        self,
+        id: int | str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """The reseller's customer accounts deleted from its server whose backups are still held (30 days after their last backup): they can be created again. Also needs hosting:view
+
+        ``GET /accounts/{id}/reseller/retained``
+        """
+        return self._request(
+            "GET",
+            "/hosting/v1/accounts/" + path_segment(id) + "/reseller/retained",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def reseller_restore_retained(
+        self,
+        id: int | str,
+        username: str,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Create a deleted customer account again from its latest backup, under its old username and domain, owned by the reseller. No charge; it counts against the reseller's account limit. Also needs hosting:view and hosting:manage
+
+        ``POST /accounts/{id}/reseller/retained/{username}/restore``
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/accounts/" + path_segment(id) + "/reseller/retained/" + path_segment(username) + "/restore",
             query=None,
             body=None,
             idempotent=False,
@@ -4957,6 +5460,51 @@ class HostingService(Service):
             headers=headers,
         )
 
+    def list_retained(
+        self,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Your terminated accounts whose backup is still held (about 30 days after the termination): they can be claimed back
+
+        ``GET /retained``
+        """
+        return self._request(
+            "GET",
+            "/hosting/v1/retained",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def claim_retained(
+        self,
+        id: int | str,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Claim a terminated account back: an order of a new term (the order's price, the restore itself is free) on the same server, created from its latest backup under its old domain. Answered like an order: follow the action. Its domain or username held again fails it and releases the payment hold
+
+        ``POST /retained/{id}/claim``
+
+        Sent with an Idempotency-Key (generated when ``idempotency_key`` is
+        not given), so it is retried safely after a network error or a 5xx.
+        """
+        return self._request(
+            "POST",
+            "/hosting/v1/retained/" + path_segment(id) + "/claim",
+            query=None,
+            body=body,
+            idempotent=True,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
 
 class BaremetalService(Service):
     """Dedicated servers (bare metal) API (``/baremetal/v1``)."""
@@ -5136,6 +5684,26 @@ class BaremetalService(Service):
             "GET",
             "/baremetal/v1/plans/" + path_segment(catalog) + "/" + path_segment(plan) + "/options",
             query={"datacenter": datacenter, "memory": memory, "storage": storage, "system_storage": system_storage, "gpu": gpu},
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def list_provider_ip_servers(
+        self,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Your servers an additional IP (bought in the IP product) can go to, with each datacenter's registry, and why not
+
+        ``GET /provider-ips/servers``
+        """
+        return self._request(
+            "GET",
+            "/baremetal/v1/provider-ips/servers",
+            query=None,
             body=None,
             idempotent=False,
             idempotency_key=idempotency_key,
@@ -5623,6 +6191,47 @@ class SMSService(Service):
 
     _prefix = "/sms/v1"
 
+    def get_application(
+        self,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """The activation request and whether one is needed
+
+        ``GET /application``
+        """
+        return self._request(
+            "GET",
+            "/sms/v1/application",
+            query=None,
+            body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def create_application(
+        self,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Submit the activation request (reviewed before the account can send)
+
+        ``POST /application``
+        """
+        return self._request(
+            "POST",
+            "/sms/v1/application",
+            query=None,
+            body=body,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
     def list_batches(
         self,
         *,
@@ -5829,7 +6438,7 @@ class SMSService(Service):
         idempotency_key: Optional[str] = None,
         headers: Optional[Mapping[str, str]] = None,
     ) -> Any:
-        """Send a message to one or more recipients (or schedule it)
+        """Send an approved template to up to 100 recipients (only for accounts staff opened for direct sending; otherwise 403 direct_send_disabled - use /verify/lookup)
 
         ``POST /messages``
         """
@@ -6051,6 +6660,27 @@ class SMSService(Service):
             "/sms/v1/templates/" + path_segment(template),
             query=None,
             body=None,
+            idempotent=False,
+            idempotency_key=idempotency_key,
+            headers=headers,
+        )
+
+    def create_verify_lookup(
+        self,
+        body: Any,
+        *,
+        idempotency_key: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> Any:
+        """Send an approved template to one recipient (verification codes, notices)
+
+        ``POST /verify/lookup``
+        """
+        return self._request(
+            "POST",
+            "/sms/v1/verify/lookup",
+            query=None,
+            body=body,
             idempotent=False,
             idempotency_key=idempotency_key,
             headers=headers,
