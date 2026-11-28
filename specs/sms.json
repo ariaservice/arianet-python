@@ -1,6 +1,106 @@
 {
   "components": {
     "schemas": {
+      "Application": {
+        "properties": {
+          "brand_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "review_reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sample_message": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "use_cases": {
+            "items": {
+              "enum": [
+                "otp",
+                "transactional",
+                "alerts"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "website": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ApplicationInput": {
+        "properties": {
+          "accept_terms": {
+            "description": "service messages only, never advertising",
+            "type": "boolean"
+          },
+          "brand_name": {
+            "maxLength": 191,
+            "type": "string"
+          },
+          "description": {
+            "description": "what you send, to whom, and why they expect it",
+            "maxLength": 2000,
+            "minLength": 20,
+            "type": "string"
+          },
+          "sample_message": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "use_cases": {
+            "items": {
+              "enum": [
+                "otp",
+                "transactional",
+                "alerts"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "website": {
+            "maxLength": 255,
+            "type": "string"
+          }
+        },
+        "required": [
+          "brand_name",
+          "use_cases",
+          "description",
+          "accept_terms"
+        ],
+        "type": "object"
+      },
       "Batch": {
         "properties": {
           "body": {
@@ -173,6 +273,66 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "LookupAccepted": {
+        "properties": {
+          "batch_id": {
+            "type": "string"
+          },
+          "cost_rial": {
+            "type": "integer"
+          },
+          "message_id": {
+            "type": "integer"
+          },
+          "receptor": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "LookupRequest": {
+        "properties": {
+          "client_reference": {
+            "type": "string"
+          },
+          "from": {
+            "description": "sender line number or id; the account's default line when absent",
+            "type": "string"
+          },
+          "receptor": {
+            "description": "recipient mobile (required with an API token; from a panel session only your own mobile, the default)",
+            "type": "string"
+          },
+          "template": {
+            "description": "an approved template's id or name",
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "tokens": {
+            "additionalProperties": {
+              "maxLength": 40,
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "template"
+        ],
         "type": "object"
       },
       "Message": {
@@ -447,16 +607,12 @@
       },
       "SendRequest": {
         "properties": {
-          "body": {
-            "maxLength": 2000,
-            "type": "string"
-          },
           "client_reference": {
             "description": "idempotency reference; the Idempotency-Key header is used when absent",
             "type": "string"
           },
           "from": {
-            "description": "sender line id",
+            "description": "sender line id or number",
             "type": "integer"
           },
           "recipients": {
@@ -471,11 +627,28 @@
             "type": "string"
           },
           "template_id": {
-            "type": "integer"
+            "description": "an approved template's id or name; required (free text is not accepted)",
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "tokens": {
+            "additionalProperties": {
+              "maxLength": 40,
+              "type": "string"
+            },
+            "description": "a value for every {placeholder} of the template: one line, at most 40 characters, no link, domain or phone number",
+            "type": "object"
           }
         },
         "required": [
           "recipients",
+          "template_id",
           "from"
         ],
         "type": "object"
@@ -525,6 +698,13 @@
           "body": {
             "type": "string"
           },
+          "category": {
+            "enum": [
+              "otp",
+              "transactional"
+            ],
+            "type": "string"
+          },
           "created_at": {
             "format": "date-time",
             "nullable": true,
@@ -535,6 +715,30 @@
           },
           "name": {
             "type": "string"
+          },
+          "placeholders": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "review_reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "only an approved template can be sent; a changed body is reviewed again",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "type": "string"
           }
         },
         "type": "object"
@@ -542,6 +746,16 @@
       "TemplateInput": {
         "properties": {
           "body": {
+            "description": "service text with {placeholders} (lower-case letters, digits, _); advertising is rejected",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "category": {
+            "default": "transactional",
+            "enum": [
+              "otp",
+              "transactional"
+            ],
             "type": "string"
           },
           "name": {
@@ -694,6 +908,107 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/application": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "account_status": {
+                          "type": "string"
+                        },
+                        "application": {
+                          "$ref": "#/components/schemas/Application"
+                        },
+                        "required": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "{account_status, required, application}"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The activation request and whether one is needed",
+        "tags": [
+          "account"
+        ],
+        "x-iam-action": "sms:messages:read"
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Submitted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Submit the activation request (reviewed before the account can send)",
+        "tags": [
+          "account"
+        ],
+        "x-iam-action": "sms:account:apply"
+      }
+    },
     "/batches": {
       "get": {
         "parameters": [
@@ -1297,7 +1612,7 @@
             "session": []
           }
         ],
-        "summary": "Send a message to one or more recipients (or schedule it)",
+        "summary": "Send an approved template to up to 100 recipients (only for accounts staff opened for direct sending; otherwise 403 direct_send_disabled - use /verify/lookup)",
         "tags": [
           "messages"
         ],
@@ -1806,6 +2121,52 @@
           "templates"
         ],
         "x-iam-action": "sms:templates:write"
+      }
+    },
+    "/verify/lookup": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookupAccepted"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error {code, message}"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Send an approved template to one recipient (verification codes, notices)",
+        "tags": [
+          "messages"
+        ],
+        "x-iam-action": "sms:messages:send"
       }
     },
     "/webhook": {

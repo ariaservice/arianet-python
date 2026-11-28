@@ -141,9 +141,17 @@
             "description": "Its plan's kind when ordered; never changes (a plan change stays within it).",
             "enum": [
               "shared",
-              "reseller"
+              "reseller",
+              "download"
             ],
             "type": "string"
+          },
+          "panel_login_url": {
+            "description": "Where the account's control panel (capabilities.panel: cPanel or DirectAdmin) is logged in to by hand, with panel_username and the account's password. Logging in through the site's own domain (/cpanel, cpanel.<domain>, :2083, :2222) does not work. GET /accounts/{id} only (never a list): an https URL, or null when it does not apply, is not configured, or the account is pending, terminated or failed. A one-time POST /accounts/{id}/login link is the quickest way in.",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "panel_username": {
             "type": [
@@ -181,6 +189,13 @@
               "null"
             ]
           },
+          "reseller_login_url": {
+            "description": "Where a reseller account (kind reseller) manages its customers: WHM on cPanel; on a panel without a separate reseller login, the same as panel_login_url. GET /accounts/{id} only (never a list): an https URL, or null when it does not apply, is not configured, or the account is pending, terminated or failed. A one-time POST /accounts/{id}/login link is the quickest way in.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "reset_incomplete": {
             "description": "A reset removed the account from its server and has not created it again yet: true while a reset runs, and after one that failed halfway (its action ends with reset_incomplete). Run the reset again to recreate it.",
             "type": "boolean"
@@ -208,6 +223,13 @@
           },
           "term": {
             "type": "string"
+          },
+          "webmail_url": {
+            "description": "The server's webmail, for an account whose panel has email (capabilities.email). GET /accounts/{id} only (never a list): an https URL, or null when it does not apply, is not configured, or the account is pending, terminated or failed. A one-time POST /accounts/{id}/login link is the quickest way in.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -227,7 +249,7 @@
       "Action": {
         "properties": {
           "command": {
-            "description": "reseller_account_*: a reseller's operation on one of its customer accounts, on the reseller's account; result names it (username, domain, package, reason).",
+            "description": "reseller_account_*: a reseller's operation on one of its customer accounts, on the reseller's account; result names it (username, domain, package, reason). backup and reseller_account_backup: result also has op (enable, disable, manual, restore, download, restore_deleted), snapshot, scope and file.",
             "enum": [
               "create",
               "suspend",
@@ -237,6 +259,7 @@
               "renew",
               "reset",
               "redis",
+              "backup",
               "reseller_account_create",
               "reseller_account_terminate",
               "reseller_account_reset",
@@ -245,7 +268,8 @@
               "reseller_account_suspend",
               "reseller_account_unsuspend",
               "change_domain",
-              "reseller_account_domain"
+              "reseller_account_domain",
+              "reseller_account_backup"
             ],
             "type": "string"
           },
@@ -322,7 +346,7 @@
         "properties": {
           "data": {
             "additionalProperties": true,
-            "description": "The kind's details. attack_blocked: {domain, ip, requests, window_s, block_s}; disk_threshold: {percent (70 or 90), used_mb, limit_mb}; over_quota: {stage (warning, suspended or cleared), used_mb, limit_mb, grace_ends_at (unix seconds, warning only)}; resource_limit: {cpu, memory, entry_processes, processes, io, iops} - how often each CloudLinux limit was hit in the latest hour.",
+            "description": "The kind's details. attack_blocked: {domain, ip, requests, window_s, block_s, until (unix seconds), others (more IPs blocked for the site in the same run), evidence (BlockEvidence)}; disk_threshold: {percent (70 or 90), used_mb, limit_mb}; over_quota: {stage (warning, suspended or cleared), used_mb, limit_mb, grace_ends_at (unix seconds, warning only)}; resource_limit: {cpu, memory, entry_processes, processes, io, iops} - how often each CloudLinux limit was hit in the latest hour (kept for this list, not told to the owner); usage_threshold: {resource (disk, cpu, memory, entry_processes or io), level (70 or 95), percent, used, limit, unit (mb, percent of one core, count or kbps), used_mb and limit_mb (disk and memory), window (7d; absent for the disk), notice, notices_max} - a resource reached a level of the plan's limit and the owner was asked to upgrade.",
             "type": "object"
           },
           "id": {
@@ -330,11 +354,15 @@
             "type": "integer"
           },
           "kind": {
-            "description": "attack_blocked, disk_threshold, over_quota or resource_limit (others may be added).",
+            "description": "attack_blocked, over_quota, usage_threshold or resource_limit; disk_threshold on alerts stored before 2026-11 (others may be added).",
             "examples": [
               "attack_blocked"
             ],
             "type": "string"
+          },
+          "notified": {
+            "description": "Whether the owner was told (SMS, telegram, email and the bell). CloudLinux limit faults (resource_limit) are listed only.",
+            "type": "boolean"
           },
           "occurred_at": {
             "format": "date-time",
@@ -345,7 +373,389 @@
           "id",
           "kind",
           "data",
+          "notified",
           "occurred_at"
+        ],
+        "type": "object"
+      },
+      "AllowedIP": {
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ip",
+          "note",
+          "added_at"
+        ],
+        "type": "object"
+      },
+      "Backups": {
+        "properties": {
+          "can_manage": {
+            "type": "boolean"
+          },
+          "downloads": {
+            "description": "Archives built by POST .../download, deleted from the home after 48 hours; empty while off.",
+            "items": {
+              "properties": {
+                "expires_at": {
+                  "description": "RFC 3339 time, UTC.",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "file": {
+                  "description": "The archive's name in the account's home directory: fetch it with the File Manager login link.",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "snapshot": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "file",
+                "expires_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "due_now": {
+            "description": "What turning it on now is estimated to cost: the price for the rest of the term (0.00 when this term is already paid for it). Display only. Null while on or not on sale.",
+            "properties": {
+              "amount": {
+                "description": "Decimal string.",
+                "type": "string"
+              },
+              "currency": {
+                "description": "ISO 4217.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "enabled": {
+            "description": "The backup add-on is on: its restore points are shown and can be used.",
+            "type": "boolean"
+          },
+          "manual": {
+            "description": "Own backups kept: taking one more rotates the oldest out.",
+            "properties": {
+              "max": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "used": {
+                "format": "int64",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "used",
+              "max"
+            ],
+            "type": "object"
+          },
+          "period_ends_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price": {
+            "description": "The add-on's price per term (SKU hosting.backup.<plan>.<term>); null when it is not on sale.",
+            "properties": {
+              "amount": {
+                "description": "Decimal string.",
+                "type": "string"
+              },
+              "currency": {
+                "description": "ISO 4217.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "restore_points": {
+            "description": "Newest first; empty while the add-on is off.",
+            "items": {
+              "properties": {
+                "id": {
+                  "description": "The restore point's id (restic short id).",
+                  "type": "string"
+                },
+                "kind": {
+                  "description": "nightly: the server's own (7 daily and 4 weekly are kept); manual: one taken with POST /accounts/{id}/backups.",
+                  "enum": [
+                    "nightly",
+                    "manual"
+                  ],
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "taken_at": {
+                  "description": "RFC 3339 time, UTC.",
+                  "format": "date-time",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "taken_at",
+                "kind",
+                "size_bytes"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "running": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Action"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "supported": {
+            "description": "The account's server has backups (a reseller account too: its add-on also covers its customer accounts). False for a server without them; the rest is then empty.",
+            "type": "boolean"
+          },
+          "term": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "supported",
+          "enabled",
+          "price",
+          "due_now",
+          "restore_points",
+          "manual",
+          "running",
+          "downloads"
+        ],
+        "type": "object"
+      },
+      "BlockEvidence": {
+        "additionalProperties": true,
+        "description": "Why the guard blocked the IP, from the site's access log over the window.",
+        "properties": {
+          "distinct_paths": {
+            "type": "integer"
+          },
+          "distinct_paths_more": {
+            "description": "More distinct paths than were told apart (200).",
+            "type": "boolean"
+          },
+          "distinct_user_agents": {
+            "type": "integer"
+          },
+          "fake_crawler": {
+            "description": "The crawler it claimed to be.",
+            "type": "string"
+          },
+          "first_at": {
+            "description": "Unix seconds of its first request in the window.",
+            "type": "integer"
+          },
+          "hints": {
+            "description": "What it looks like: login_attack (mostly POSTs to login pages), admin_activity (mostly answered admin pages: maybe the owner), page_assets (one browser loading mostly the site's files), not_found_scan (mostly 404), single_page (one page hammered), fake_crawler (claimed a search-engine crawler it is not).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "last_at": {
+            "type": "integer"
+          },
+          "methods": {
+            "description": "[value, count] pairs, most frequent first.",
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "paths": {
+            "description": "Top paths (no query strings), [path, count].",
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "per_minute_avg": {
+            "type": "number"
+          },
+          "per_minute_peak": {
+            "type": "integer"
+          },
+          "requests": {
+            "type": "integer"
+          },
+          "rule": {
+            "description": "The rule that fired: request_flood (at least threshold requests to one site within window_s).",
+            "examples": [
+              "request_flood"
+            ],
+            "type": "string"
+          },
+          "statuses": {
+            "description": "[value, count] pairs, most frequent first.",
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "threshold": {
+            "type": "integer"
+          },
+          "user_agents": {
+            "description": "[value, count] pairs, most frequent first.",
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "window_s": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "BlockedIP": {
+        "properties": {
+          "active": {
+            "description": "Still blocked.",
+            "type": "boolean"
+          },
+          "blocked_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "domain": {
+            "description": "The site it flooded.",
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/BlockEvidence"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "lifted_at": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lifted_by": {
+            "description": "owner, or expired.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shared": {
+            "description": "Blocked for another account's site too: only support can lift it.",
+            "type": "boolean"
+          },
+          "until": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ip",
+          "domain",
+          "blocked_at",
+          "until",
+          "active",
+          "shared",
+          "lifted_at",
+          "lifted_by",
+          "evidence"
         ],
         "type": "object"
       },
@@ -354,6 +764,10 @@
         "properties": {
           "account_password": {
             "description": "The account's own password (control panel login, FTP, SSH) can be changed: POST /accounts/{id}/password.",
+            "type": "boolean"
+          },
+          "backups": {
+            "description": "The account's server keeps nightly backups of it: GET /accounts/{id}/backups.",
             "type": "boolean"
           },
           "change_domain": {
@@ -763,9 +1177,17 @@
               "account_terminated",
               "action_failed",
               "action_in_progress",
+              "allowlist_full",
               "already",
               "already_adopted",
               "already_exists",
+              "backup_failed",
+              "backup_timeout",
+              "backups_disabled",
+              "backups_enabled",
+              "block_foreign",
+              "block_not_found",
+              "block_shared",
               "cagefs_not_ready",
               "confirmation_mismatch",
               "confirmation_required",
@@ -779,6 +1201,7 @@
               "failed",
               "feature_unavailable",
               "forbidden",
+              "foreign_ban",
               "id_prefix_taken",
               "idempotency_key_reused",
               "identity_hold",
@@ -793,24 +1216,32 @@
               "limit_reached",
               "method_not_allowed",
               "name_taken",
+              "no_backup",
+              "not_applicable",
               "not_found",
               "not_on_panel",
               "order_unavailable",
               "panel_account_missing",
               "panel_unavailable",
+              "payment_hold",
               "php_selector_disabled",
               "php_selector_needs_cagefs",
               "php_selector_unavailable",
               "plan_unavailable",
+              "pmem",
               "rate_limit_exceeded",
               "redis_needs_cagefs",
               "redis_not_running",
               "redis_off",
               "redis_tier_unavailable",
               "reseller_account_limit",
+              "reseller_package_exceeds_plan",
               "reseller_resource_limit",
+              "reseller_unlimited_not_allowed",
+              "retained_claimed",
               "server_in_use",
               "server_unreachable",
+              "shared",
               "shell_disabled",
               "shell_not_confined",
               "sold_out",
@@ -824,6 +1255,9 @@
             ],
             "type": "string"
           },
+          "details": {
+            "$ref": "#/components/schemas/LimitDetails"
+          },
           "error": {
             "description": "English, for people. Branch on code.",
             "type": "string"
@@ -832,6 +1266,108 @@
         "required": [
           "error",
           "code"
+        ],
+        "type": "object"
+      },
+      "Firewall": {
+        "properties": {
+          "allowed": {
+            "items": {
+              "$ref": "#/components/schemas/AllowedIP"
+            },
+            "type": "array"
+          },
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/BlockedIP"
+            },
+            "type": "array"
+          },
+          "max_allowed": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "blocks",
+          "allowed",
+          "max_allowed"
+        ],
+        "type": "object"
+      },
+      "LimitDetails": {
+        "description": "Only with the reseller limit codes (reseller_account_limit, reseller_resource_limit, reseller_package_exceeds_plan, reseller_unlimited_not_allowed; arianet-infra-tasks#1305): the figures behind the refusal, for a client to say what happened.",
+        "properties": {
+          "package": {
+            "description": "The reseller package asked for, when there is one.",
+            "type": "string"
+          },
+          "violations": {
+            "items": {
+              "properties": {
+                "allocated": {
+                  "description": "Already given out, the reseller's own account's share included; null: not known.",
+                  "format": "int64",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "limit": {
+                  "description": "The reseller plan's total (or account cap); null: not known.",
+                  "format": "int64",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "remaining": {
+                  "description": "What is left for the reseller's customers; null: not known.",
+                  "format": "int64",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "requested": {
+                  "description": "What was asked for; null: unlimited, or not known for an account-cap refusal by the panel.",
+                  "format": "int64",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "resource": {
+                  "enum": [
+                    "disk",
+                    "bandwidth",
+                    "accounts"
+                  ],
+                  "type": "string"
+                },
+                "unit": {
+                  "description": "mb for disk and bandwidth, accounts for the account cap.",
+                  "enum": [
+                    "mb",
+                    "accounts"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "resource",
+                "unit",
+                "limit",
+                "allocated",
+                "requested",
+                "remaining"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "violations"
         ],
         "type": "object"
       },
@@ -1040,10 +1576,11 @@
             "type": "integer"
           },
           "kind": {
-            "description": "shared: one hosting account. reseller: an account that creates and sells hosting accounts of its own.",
+            "description": "shared: one hosting account. reseller: an account that creates and sells hosting accounts of its own. download: one account on a download server (large disk, unmetered traffic).",
             "enum": [
               "shared",
-              "reseller"
+              "reseller",
+              "download"
             ],
             "type": "string"
           },
@@ -1641,6 +2178,17 @@
               "null"
             ]
           },
+          "exceeds_plan": {
+            "description": "What one account on it would get beyond what the reseller's plan leaves all its customers together (empty: it fits). No account is created on or moved to such a package here (reseller_package_exceeds_plan).",
+            "items": {
+              "enum": [
+                "disk",
+                "bandwidth"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
           "max_addon_domains": {
             "format": "int64",
             "type": [
@@ -1685,7 +2233,49 @@
           "name",
           "disk_mb",
           "bandwidth_mb",
-          "accounts"
+          "accounts",
+          "exceeds_plan"
+        ],
+        "type": "object"
+      },
+      "ResellerRetainedAccount": {
+        "properties": {
+          "deleted_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "domain": {
+            "description": "Its main domain; null when unknown.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_backup_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retained_until": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "username": {
+            "description": "The deleted customer account's username.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "domain",
+          "deleted_at",
+          "retained_until",
+          "last_backup_at"
         ],
         "type": "object"
       },
@@ -1952,6 +2542,88 @@
         ],
         "type": "object"
       },
+      "RetainedAccount": {
+        "properties": {
+          "datacenter": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "id": {
+            "description": "The terminated account's id.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_backup_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan": {
+            "properties": {
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "name_local": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "project_id": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "retained_until": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "terminated_at": {
+            "description": "RFC 3339 time, UTC.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "domain",
+          "plan",
+          "terminated_at",
+          "retained_until",
+          "last_backup_at"
+        ],
+        "type": "object"
+      },
       "SSHKey": {
         "properties": {
           "authorized": {
@@ -2041,8 +2713,15 @@
         "type": "object"
       },
       "Traffic": {
-        "description": "An account's download traffic in its current traffic period (one month anchored on its term's start). Only download (HTTP bytes sent to visitors) counts against the plan's quota; upload is free and shown for information. Download above the quota is charged per GB while overage_billing is on; while it is off the account's sites are blocked (HTTP 509) once the quota is reached, until the next period. MB are 2^20 bytes, GB 1024 MB.",
+        "description": "An account's download traffic in its current traffic period (one month anchored on its term's start). Only download (HTTP bytes sent to visitors) counts against the plan's quota; upload is free and shown for information. Download above the quota is charged per GB while overage_billing is on; while it is off the account's sites are blocked (HTTP 509) once the quota is reached, until the next period. MB are 2^20 bytes, GB 1024 MB. A download hosting account (rule download_window, #1233) has no monthly quota and no switch: in any window_days (10) days, download up to allowance_factor (5) x the plan's disk quota is free and download beyond it is always charged per GB, each byte at most once; its period_* is the last 10 days ending with the day under way and quota_mb that allowance.",
         "properties": {
+          "allowance_factor": {
+            "description": "download_window only: the free allowance as a multiple of the disk quota (5).",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "billed_gb": {
             "description": "Overage already charged this period: whole GB while the period runs, the remainder when it closes.",
             "type": "number"
@@ -2135,9 +2814,24 @@
               "null"
             ]
           },
+          "rule": {
+            "description": "How the account's traffic is held: a monthly quota (#502) or a download account's rolling 10-day allowance (#1233).",
+            "enum": [
+              "monthly_quota",
+              "download_window"
+            ],
+            "type": "string"
+          },
           "upload_mb": {
             "description": "Uploaded this period (free; information only).",
             "type": "number"
+          },
+          "window_days": {
+            "description": "download_window only: the rolling window in days (10).",
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "required": [
@@ -2155,7 +2849,10 @@
           "blocked",
           "can_manage",
           "read_at",
-          "daily"
+          "daily",
+          "rule",
+          "window_days",
+          "allowance_factor"
         ],
         "type": "object"
       },
@@ -2926,6 +3623,455 @@
         ],
         "summary": "The account's alerts, newest first (kept 90 days)",
         "x-permission": "hosting:view"
+      }
+    },
+    "/accounts/{id}/backups": {
+      "get": {
+        "description": "Requires the `hosting:view` permission.",
+        "operationId": "getBackups",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Read the server again instead of the last answer (kept 30 s).",
+            "in": "query",
+            "name": "refresh",
+            "schema": {
+              "enum": [
+                "1"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Backups"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The account's backups: whether its server keeps them, the add-on, its price, the restore points and downloads",
+        "x-permission": "hosting:view"
+      },
+      "post": {
+        "description": "Requires the `hosting:manage` permission.",
+        "operationId": "takeBackup",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Take a backup now, kept as one of the account's own (the oldest of 3 rotates out)",
+        "x-codes": [
+          "feature_unavailable",
+          "backups_disabled",
+          "account_suspended",
+          "action_in_progress",
+          "not_found"
+        ],
+        "x-permission": "hosting:manage"
+      },
+      "put": {
+        "description": "Requires the `hosting:manage` permission.",
+        "operationId": "setBackups",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Turn the backup add-on on or off. On is charged for the rest of the term (nothing when this term is already paid for it) and renews with the account; off refunds nothing and hides the restore points at once",
+        "x-codes": [
+          "feature_unavailable",
+          "backups_enabled",
+          "backups_disabled",
+          "insufficient_balance (402)",
+          "order_unavailable (not on sale)",
+          "action_in_progress"
+        ],
+        "x-permission": "hosting:manage"
+      }
+    },
+    "/accounts/{id}/backups/{point}/download": {
+      "post": {
+        "description": "Requires the `hosting:manage` permission.",
+        "operationId": "downloadBackup",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "A restore point id from GET /accounts/{id}/backups.",
+            "in": "path",
+            "name": "point",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Build a downloadable archive (a cPanel backup) of a restore point in the account's home; once the action succeeds it is in downloads (its result names the file), fetched with the File Manager login link, and deleted after 48 hours",
+        "x-codes": [
+          "feature_unavailable",
+          "backups_disabled",
+          "account_suspended",
+          "action_in_progress",
+          "not_found",
+          "no_space (action error)"
+        ],
+        "x-permission": "hosting:manage"
+      }
+    },
+    "/accounts/{id}/backups/{point}/restore": {
+      "post": {
+        "description": "Requires the `hosting:manage` permission.",
+        "operationId": "restoreBackup",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "A restore point id from GET /accounts/{id}/backups.",
+            "in": "path",
+            "name": "point",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "scope": {
+                    "enum": [
+                      "full",
+                      "files",
+                      "databases"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "scope"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Restore a restore point over the account: everything (full), only the files and mail (files) or only the databases. The current data is overwritten; the plan and main domain stay as they are",
+        "x-codes": [
+          "feature_unavailable",
+          "backups_disabled",
+          "account_suspended",
+          "action_in_progress",
+          "not_found",
+          "invalid_input",
+          "no_space (action error)",
+          "backup_failed (action error)"
+        ],
+        "x-permission": "hosting:manage"
       }
     },
     "/accounts/{id}/cloudlinux": {
@@ -4392,6 +5538,381 @@
         "x-permission": "hosting:email:manage"
       }
     },
+    "/accounts/{id}/firewall": {
+      "get": {
+        "description": "Requires the `hosting:view` permission. The server's attack guard blocks an IP that floods one of the account's sites (temporarily). Lists the blocks of the last 7 days, newest first, each with the guard's evidence of why, and the IPs the account allowed. 422 feature_unavailable when the server's guard cannot report them yet.",
+        "operationId": "getFirewall",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Firewall"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "IPs the server blocked for the account's sites, why, and its allowlist",
+        "x-permission": "hosting:view"
+      }
+    },
+    "/accounts/{id}/firewall/allowed": {
+      "post": {
+        "description": "Requires the `hosting:manage` permission. The guard never blocks it for this account's sites again; other accounts' sites are not affected (nothing is allowed server-wide). Public single addresses only (no ranges, private or reserved addresses), at most max_allowed (409 allowlist_full). unblock: also lift its block when it can be; unblock_refused says why it could not (block_shared reasons as for unblock). Logged in the activity log.",
+        "operationId": "allowIP",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ip": {
+                    "description": "One IPv4 or IPv6 address.",
+                    "examples": [
+                      "82.152.98.2"
+                    ],
+                    "type": "string"
+                  },
+                  "note": {
+                    "description": "What it is, for the owner (e.g. office).",
+                    "maxLength": 64,
+                    "type": "string"
+                  },
+                  "unblock": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "ip"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "added": {
+                          "description": "false: it was already allowed (its note updated).",
+                          "type": "boolean"
+                        },
+                        "unblock_refused": {
+                          "description": "shared or foreign_ban when unblock was asked and the block could not be lifted.",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "unblocked": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "added",
+                        "unblocked",
+                        "unblock_refused"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Allow an IP: never blocked for the account's sites",
+        "x-permission": "hosting:manage"
+      }
+    },
+    "/accounts/{id}/firewall/allowed/{ip}": {
+      "delete": {
+        "description": "Requires the `hosting:manage` permission. removed false: it was not on it. Logged in the activity log.",
+        "operationId": "disallowIP",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The allowed address (URL-encoded).",
+            "in": "path",
+            "name": "ip",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "removed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "removed"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Take an IP off the account's allowlist",
+        "x-permission": "hosting:manage"
+      }
+    },
+    "/accounts/{id}/firewall/unblock": {
+      "post": {
+        "description": "Requires the `hosting:manage` permission. Only a block the guard raised for this account's own sites and still in force: 404 block_not_found otherwise; 409 block_shared when the same IP is blocked for another account's site too, 409 block_foreign when the server's firewall holds it for another reason (support can lift those). unblocked false: it had already expired. The guard may block it again if the flood goes on; allow it to stop that. Logged in the activity log.",
+        "operationId": "unblockIP",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ip": {
+                    "description": "One IPv4 or IPv6 address.",
+                    "examples": [
+                      "82.152.98.2"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ip"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "unblocked": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "unblocked"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Lift a block of an IP raised for the account's sites",
+        "x-permission": "hosting:manage"
+      }
+    },
     "/accounts/{id}/login": {
       "post": {
         "description": "Requires the `hosting:panel:access` permission.",
@@ -5753,6 +7274,8 @@
           "username_taken",
           "reseller_account_limit",
           "reseller_resource_limit",
+          "reseller_package_exceeds_plan",
+          "reseller_unlimited_not_allowed",
           "action_in_progress",
           "domain_exists_on_server (action error)"
         ],
@@ -5863,6 +7386,405 @@
           "invalid_input",
           "confirmation_mismatch",
           "action_in_progress"
+        ],
+        "x-permission": "hosting:reseller:manage"
+      }
+    },
+    "/accounts/{id}/reseller/accounts/{username}/backups": {
+      "get": {
+        "description": "Requires the `hosting:reseller:manage` permission.",
+        "operationId": "getResellerAccountBackups",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The customer account's username on the reseller's panel (GET /accounts/{id}/reseller/accounts).",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Read the server again instead of the last answer (kept 30 s).",
+            "in": "query",
+            "name": "refresh",
+            "schema": {
+              "enum": [
+                "1"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Backups"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "One of the reseller's customer accounts' backups, in the shape of an account's: its restore points (only those taken while the reseller owned it), manual backups, the running action and downloads. price and due_now are null (the add-on is the reseller account's). Also needs hosting:view",
+        "x-codes": [
+          "backups_disabled (409: the add-on is off on the reseller account)",
+          "feature_unavailable (not a reseller, or no backups on its server)",
+          "account_pending",
+          "account_terminated",
+          "not_found (not one of the reseller's customer accounts, or not its restore point)"
+        ],
+        "x-permission": "hosting:reseller:manage"
+      },
+      "post": {
+        "description": "Requires the `hosting:reseller:manage` permission.",
+        "operationId": "resellerTakeAccountBackup",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The customer account's username on the reseller's panel (GET /accounts/{id}/reseller/accounts).",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Take a backup of one of the reseller's customer accounts now, kept as one of its own (the oldest of 3 rotates out). Also needs hosting:view and hosting:manage",
+        "x-codes": [
+          "backups_disabled (409: the add-on is off on the reseller account)",
+          "feature_unavailable (not a reseller, or no backups on its server)",
+          "account_pending",
+          "account_terminated",
+          "not_found (not one of the reseller's customer accounts, or not its restore point)",
+          "account_suspended (the reseller)",
+          "action_in_progress"
+        ],
+        "x-permission": "hosting:reseller:manage"
+      }
+    },
+    "/accounts/{id}/reseller/accounts/{username}/backups/{point}/download": {
+      "post": {
+        "description": "Requires the `hosting:reseller:manage` permission.",
+        "operationId": "resellerDownloadAccountBackup",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The customer account's username on the reseller's panel (GET /accounts/{id}/reseller/accounts).",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A restore point id from GET /accounts/{id}/reseller/accounts/{username}/backups.",
+            "in": "path",
+            "name": "point",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Build a downloadable archive of a restore point in the customer account's home; fetch it with the customer account's File Manager login (POST .../login), deleted after 48 hours. Also needs hosting:view and hosting:manage",
+        "x-codes": [
+          "backups_disabled (409: the add-on is off on the reseller account)",
+          "feature_unavailable (not a reseller, or no backups on its server)",
+          "account_pending",
+          "account_terminated",
+          "not_found (not one of the reseller's customer accounts, or not its restore point)",
+          "action_in_progress",
+          "no_space (action error)"
+        ],
+        "x-permission": "hosting:reseller:manage"
+      }
+    },
+    "/accounts/{id}/reseller/accounts/{username}/backups/{point}/restore": {
+      "post": {
+        "description": "Requires the `hosting:reseller:manage` permission.",
+        "operationId": "resellerRestoreAccountBackup",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The customer account's username on the reseller's panel (GET /accounts/{id}/reseller/accounts).",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A restore point id from GET /accounts/{id}/reseller/accounts/{username}/backups.",
+            "in": "path",
+            "name": "point",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "scope": {
+                    "enum": [
+                      "full",
+                      "files",
+                      "databases"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "scope"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Restore one of the reseller's customer accounts from a restore point: everything (full), only the files and mail (files) or only the databases; its package and main domain stay. Also needs hosting:view and hosting:manage",
+        "x-codes": [
+          "backups_disabled (409: the add-on is off on the reseller account)",
+          "feature_unavailable (not a reseller, or no backups on its server)",
+          "account_pending",
+          "account_terminated",
+          "not_found (not one of the reseller's customer accounts, or not its restore point)",
+          "invalid_input",
+          "action_in_progress",
+          "no_space (action error)",
+          "backup_failed (action error)"
         ],
         "x-permission": "hosting:reseller:manage"
       }
@@ -6178,6 +8100,8 @@
           "not_found (not one of the reseller's customer accounts)",
           "invalid_input",
           "reseller_resource_limit",
+          "reseller_package_exceeds_plan",
+          "reseller_unlimited_not_allowed",
           "action_in_progress"
         ],
         "x-permission": "hosting:reseller:manage"
@@ -6630,6 +8554,177 @@
           "feature_unavailable (not a reseller)",
           "account_pending",
           "account_terminated"
+        ],
+        "x-permission": "hosting:reseller:manage"
+      }
+    },
+    "/accounts/{id}/reseller/retained": {
+      "get": {
+        "description": "Requires the `hosting:reseller:manage` permission.",
+        "operationId": "listResellerRetained",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/ResellerRetainedAccount"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "The reseller's customer accounts deleted from its server whose backups are still held (30 days after their last backup): they can be created again. Also needs hosting:view",
+        "x-codes": [
+          "backups_disabled (409: the add-on is off on the reseller account)",
+          "feature_unavailable (not a reseller, or no backups on its server)",
+          "account_pending",
+          "account_terminated",
+          "not_found (not one of the reseller's customer accounts, or not its restore point)"
+        ],
+        "x-permission": "hosting:reseller:manage"
+      }
+    },
+    "/accounts/{id}/reseller/retained/{username}/restore": {
+      "post": {
+        "description": "Requires the `hosting:reseller:manage` permission.",
+        "operationId": "resellerRestoreRetained",
+        "parameters": [
+          {
+            "description": "Hosting account id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "A username from GET /accounts/{id}/reseller/retained.",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create a deleted customer account again from its latest backup, under its old username and domain, owned by the reseller. No charge; it counts against the reseller's account limit. Also needs hosting:view and hosting:manage",
+        "x-codes": [
+          "backups_disabled (409: the add-on is off on the reseller account)",
+          "feature_unavailable (not a reseller, or no backups on its server)",
+          "account_pending",
+          "account_terminated",
+          "not_found (not one of the reseller's customer accounts, or not its restore point)",
+          "reseller_account_limit",
+          "username_taken",
+          "domain_taken",
+          "action_in_progress",
+          "username_taken (action error)",
+          "domain_taken (action error)",
+          "no_backup (action error)"
         ],
         "x-permission": "hosting:reseller:manage"
       }
@@ -7777,7 +9872,8 @@
             "schema": {
               "enum": [
                 "shared",
-                "reseller"
+                "reseller",
+                "download"
               ],
               "type": "string"
             }
@@ -7836,6 +9932,198 @@
           }
         ],
         "summary": "Plans for sale"
+      }
+    },
+    "/retained": {
+      "get": {
+        "description": "Requires the `hosting:view` permission.",
+        "operationId": "listRetained",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/RetainedAccount"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Your terminated accounts whose backup is still held (about 30 days after the termination): they can be claimed back",
+        "x-permission": "hosting:view"
+      }
+    },
+    "/retained/{id}/claim": {
+      "post": {
+        "description": "Requires the `hosting:manage` permission.",
+        "operationId": "claimRetained",
+        "parameters": [
+          {
+            "description": "The terminated account's id.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "A repeat with the same key answers with the first order.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "plan": {
+                    "description": "A plan code of the account's datacenter.",
+                    "type": "string"
+                  },
+                  "plan_id": {
+                    "description": "Instead of plan.",
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "term": {
+                    "enum": [
+                      "weekly",
+                      "monthly",
+                      "quarterly",
+                      "semiannually",
+                      "yearly"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "term"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "action": {
+                      "$ref": "#/components/schemas/Action"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Account"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "action"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Accepted: follow the action."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Claim a terminated account back: an order of a new term (the order's price, the restore itself is free) on the same server, created from its latest backup under its old domain. Answered like an order: follow the action. Its domain or username held again fails it and releases the payment hold",
+        "x-codes": [
+          "insufficient_balance (402)",
+          "identity_needed",
+          "domain_taken",
+          "username_taken",
+          "no_backup",
+          "retained_claimed",
+          "invalid_input",
+          "username_taken (action error)",
+          "domain_taken (action error)"
+        ],
+        "x-permission": "hosting:manage"
       }
     }
   },
